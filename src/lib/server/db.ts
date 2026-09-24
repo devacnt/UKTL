@@ -352,6 +352,11 @@ export function rowToJob(row: Record<string, unknown>): Job {
     must_have_skills: parseJsonArray<string>(row.must_have_skills),
     nice_to_have_skills: parseJsonArray<string>(row.nice_to_have_skills),
     status: row.status,
+    source: (row.source as string | null) ?? null,
+    filled_candidate_id: (row.filled_candidate_id as string | null) ?? null,
+    filled_candidate_name: (row.filled_candidate_name as string | null) ?? null,
+    filled_at: row.filled_at == null ? null : Number(row.filled_at),
+    filled_note: (row.filled_note as string | null) ?? null,
   });
 }
 
@@ -625,7 +630,11 @@ export async function deleteFaqTopic(env: AppEnv, id: string): Promise<void> {
 // ── Admin: Jobs ──────────────────────────────────────────────────────────────
 
 export async function listAllJobs(env: AppEnv): Promise<Job[]> {
-  const res = await env.DB.prepare(`SELECT * FROM jobs ORDER BY created_at DESC`).all<Record<string, unknown>>();
+  const res = await env.DB.prepare(
+    env.DATA_BACKEND === "supabase"
+      ? `SELECT j.*, c.name AS filled_candidate_name FROM jobs j LEFT JOIN candidates c ON c.id=j.filled_candidate_id ORDER BY j.created_at DESC`
+      : `SELECT * FROM jobs ORDER BY created_at DESC`,
+  ).all<Record<string, unknown>>();
   return (res.results ?? []).map(rowToJob);
 }
 
@@ -640,32 +649,36 @@ export type JobInput = {
   must_have_skills: string[];
   nice_to_have_skills: string[];
   status: "open" | "closed";
+  posted_date?: string | null;
+  expiry_date?: string | null;
 };
 
 export async function createJob(env: AppEnv, id: string, input: JobInput): Promise<void> {
   const now = Date.now();
   await env.DB.prepare(
-    `INSERT INTO jobs (id, created_at, title, company, location, sector, seniority, min_years_experience, description, must_have_skills, nice_to_have_skills, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO jobs (id, created_at, title, company, location, sector, seniority, min_years_experience, description, must_have_skills, nice_to_have_skills, status, posted_date, expiry_date)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(
     id, now, input.title, input.company ?? null, input.location ?? null,
     input.sector ?? null, input.seniority ?? null, input.min_years_experience ?? null,
     input.description ?? null,
     JSON.stringify(input.must_have_skills), JSON.stringify(input.nice_to_have_skills),
-    input.status,
+    input.status, input.posted_date ?? null, input.expiry_date ?? null,
   ).run();
 }
 
 export async function updateJob(env: AppEnv, id: string, input: JobInput): Promise<void> {
   await env.DB.prepare(
+    // A filled mandate keeps its status and placement; reopen it explicitly to change that.
     `UPDATE jobs SET title=?, company=?, location=?, sector=?, seniority=?, min_years_experience=?,
-     description=?, must_have_skills=?, nice_to_have_skills=?, status=? WHERE id=?`,
+     description=?, must_have_skills=?, nice_to_have_skills=?,
+     status=CASE WHEN status='filled' THEN status ELSE ? END, posted_date=COALESCE(?, posted_date), expiry_date=? WHERE id=?`,
   ).bind(
     input.title, input.company ?? null, input.location ?? null,
     input.sector ?? null, input.seniority ?? null, input.min_years_experience ?? null,
     input.description ?? null,
     JSON.stringify(input.must_have_skills), JSON.stringify(input.nice_to_have_skills),
-    input.status, id,
+    input.status, input.posted_date ?? null, input.expiry_date ?? null, id,
   ).run();
 }
 

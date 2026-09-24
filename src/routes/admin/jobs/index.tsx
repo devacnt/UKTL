@@ -46,7 +46,7 @@ function AdminJobsList() {
   }
 
   async function deleteJob(id: string, title: string) {
-    if (!confirm(`Delete mandate "${title}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete mandate "${title}"? Its pipeline and placement history are deleted too. This cannot be undone. To keep the record, close it or mark it filled instead.`)) return;
     setBusy(id);
     try {
       await adminDeleteJobFn({ data: { id } });
@@ -60,7 +60,7 @@ function AdminJobsList() {
     <>
       <AdminHeader
         title="Mandates"
-        sub={`${jobs.filter((j: Job) => j.status === "open").length} open · ${jobs.length} total`}
+        sub={`${jobs.filter((j: Job) => effectiveStatus(j) === "open").length} open · ${jobs.filter((j: Job) => j.status === "filled").length} filled · ${jobs.length} total`}
         actions={
           <div className="flex items-center gap-3">
             <select
@@ -142,7 +142,7 @@ function AdminJobsList() {
           .
         </div>
       ) : (
-        <AdminTable head={["Title", "Company", "Location", "Sector", "Seniority", "Status", ""]}>
+        <AdminTable head={["Title", "Company", "Location", "Seniority", "Status", "Closes / filled", ""]}>
           {jobs.map((j: Job) => (
             <AdminTr key={j.id}>
               <AdminTd>
@@ -156,23 +156,21 @@ function AdminJobsList() {
               </AdminTd>
               <AdminTd className="text-ink-soft">{j.company ?? "—"}</AdminTd>
               <AdminTd className="text-ink-soft">{j.location ?? "—"}</AdminTd>
-              <AdminTd className="text-ink-soft">{j.sector ?? "—"}</AdminTd>
               <AdminTd className="text-ink-soft capitalize">{j.seniority ?? "—"}</AdminTd>
               <AdminTd>
-                <span
-                  className={`font-mono text-[11px] px-2.5 py-0.5 rounded-full border ${
-                    j.status === "open"
-                      ? "border-accent/30 bg-accent-soft text-accent"
-                      : "border-rule text-ink-mute"
-                  }`}
-                >
-                  {j.status}
-                </span>
+                <JobStatus job={j} />
+              </AdminTd>
+              <AdminTd className="text-xs text-ink-mute tabular-nums">
+                {j.status === "filled"
+                  ? `${j.filled_candidate_name ?? "Candidate"} · ${j.filled_at ? new Date(j.filled_at).toLocaleDateString("en-GB") : ""}`
+                  : j.expiry_date
+                    ? new Date(j.expiry_date.slice(0, 10) + "T12:00:00Z").toLocaleDateString("en-GB")
+                    : "No closing date"}
               </AdminTd>
               <AdminTd className="text-right">
                 <div className="flex items-center justify-end gap-2">
                   <Link to="/admin/jobs/$id" params={{ id: j.id }}>
-                    <AdminBtn>Edit</AdminBtn>
+                    <AdminBtn>{j.status === "filled" ? "View" : "Edit & rank"}</AdminBtn>
                   </Link>
                   <AdminBtn
                     variant="danger"
@@ -189,4 +187,22 @@ function AdminJobsList() {
       )}
     </>
   );
+}
+
+const todayIso = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(Date.now());
+
+function effectiveStatus(j: Job): "open" | "closed" | "filled" | "expired" {
+  if (j.status === "open" && j.expiry_date && j.expiry_date.slice(0, 10) < todayIso()) return "expired";
+  return j.status;
+}
+
+function JobStatus({ job }: { job: Job }) {
+  const status = effectiveStatus(job);
+  const tone =
+    status === "open"
+      ? "border-accent/30 bg-accent-soft text-accent"
+      : status === "filled"
+        ? "border-ink text-ink"
+        : "border-rule text-ink-mute";
+  return <span className={`font-mono text-[11px] px-2.5 py-0.5 rounded-full border ${tone}`}>{status}</span>;
 }

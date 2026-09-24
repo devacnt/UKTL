@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { getDiscoverJobsFn, recordSwipeFn, undoSwipeFn } from "@/lib/functions";
+import { filterJobs } from "@/lib/job-search";
 import type { Job } from "@/lib/schemas/job";
 
 export const Route = createFileRoute("/app/discover")({
-  validateSearch: (s) => z.object({ candidate: z.string().optional() }).parse(s),
+  validateSearch: (s) => z.object({ candidate: z.string().optional(), q: z.string().optional(), location: z.string().optional() }).parse(s),
   loaderDeps: ({ search }) => ({ candidateId: search.candidate }),
   loader: async ({ deps }) =>
     getDiscoverJobsFn({ data: { candidateId: deps.candidateId } }),
@@ -21,7 +22,10 @@ type SwipeAction = "interested" | "dismissed";
 type FlyDir = "right" | "left" | null;
 
 function DiscoverPage() {
-  const { jobs: initialJobs, matches, candidateId, canDecide, signedIn, unavailable } = Route.useLoaderData();
+  const { jobs: loadedJobs, matches, candidateId, canDecide, signedIn, unavailable } = Route.useLoaderData();
+
+  const search = Route.useSearch();
+  const initialJobs = useMemo(() => filterJobs(loadedJobs, search.q ?? "", search.location ?? ""), [loadedJobs, search.q, search.location]);
 
   const [queue, setQueue] = useState<Job[]>(initialJobs);
   const [swipedCount, setSwipedCount] = useState(0);
@@ -159,13 +163,15 @@ function DiscoverPage() {
         : undefined;
 
   const feedback = <div className="w-full max-w-[520px] my-4 text-sm" aria-live="polite">
+    <Link to="/app/jobs" search={{ q: search.q, location: search.location }} className="underline block mb-3">Search roles / change filters</Link>
+    {(search.q || search.location) && <p className="mb-3">Filtered by: {[search.q, search.location].filter(Boolean).join(" · ")}</p>}
     {saving && <p>Saving…</p>}
     {saveError && <p role="alert" className="text-red-700">{saveError}</p>}
     {lastDecision && <button disabled={saving} onClick={undoLast} className="underline mt-2 disabled:opacity-50">Undo last decision</button>}
     {signedIn && <Link to="/app/activity" className="underline block mt-3">View interests and history</Link>}
   </div>;
   if (unavailable) return <div role="alert"><h1 className="font-display text-3xl">Discovery is temporarily unavailable</h1><p className="my-4">Your decisions have not been changed. Please reload to try again.</p></div>;
-  if (queue.length === 0) return <div className="flex flex-col items-center">{feedback}<EmptyState swipedCount={swipedCount} candidateId={candidateId} /></div>;
+  if (queue.length === 0) return <div className="flex flex-col items-center">{feedback}{(search.q || search.location) ? <p className="my-10 text-center">No undecided roles match these filters. Change your search or view your interests and history.</p> : <EmptyState swipedCount={swipedCount} candidateId={candidateId} />}</div>;
 
   return (
     <div className="flex flex-col items-center min-h-[calc(100vh-100px)] pb-12 select-none">

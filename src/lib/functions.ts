@@ -541,8 +541,11 @@ export const adminListJobsFn = createServerFn({ method: "GET" }).handler(async (
     }
 });
 
+const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const JobInputSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().trim().min(1).max(200),
+  posted_date: isoDay.nullable().optional(),
+  expiry_date: isoDay.nullable().optional(),
   company: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
   sector: z.string().nullable().optional(),
@@ -554,8 +557,13 @@ const JobInputSchema = z.object({
   status: z.enum(["open", "closed"]),
 });
 
+const checkDates = <T extends { posted_date?: string | null; expiry_date?: string | null }>(v: T) => {
+  if (v.posted_date && v.expiry_date && v.expiry_date < v.posted_date) throw new Error("The closing date must be on or after the posting date");
+  return v;
+};
+
 export const adminCreateJobFn = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => JobInputSchema.parse(raw))
+  .inputValidator((raw: unknown) => checkDates(JobInputSchema.parse(raw)))
   .handler(async ({ data }) => {
     await requireAdmin();
     const id = "job_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
@@ -565,7 +573,7 @@ export const adminCreateJobFn = createServerFn({ method: "POST" })
   });
 
 export const adminUpdateJobFn = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => z.object({ id: z.string() }).merge(JobInputSchema).parse(raw))
+  .inputValidator((raw: unknown) => checkDates(z.object({ id: z.string() }).merge(JobInputSchema).parse(raw)))
   .handler(async ({ data }) => {
     await requireAdmin();
     const { id, ...input } = data;

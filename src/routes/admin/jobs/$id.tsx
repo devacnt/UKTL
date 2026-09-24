@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { JobCandidateRanking } from "@/components/app/JobCandidateRanking";
 import { adminCreateJobFn, adminUpdateJobFn } from "@/lib/functions";
 import { adminListJobsFn } from "@/lib/functions";
 import type { Job } from "@/lib/schemas/job";
@@ -20,8 +21,26 @@ export const Route = createFileRoute("/admin/jobs/$id")({
 
 function EditJobPage() {
   const job = Route.useLoaderData();
-  return <JobForm mode="edit" initial={job} />;
+  return (
+    <>
+      <JobForm key={job.id} mode="edit" initial={job} />
+      <JobCandidateRanking job={job} />
+    </>
+  );
 }
+
+const DURATIONS = [
+  { days: 14, label: "2 weeks" },
+  { days: 30, label: "30 days" },
+  { days: 60, label: "60 days" },
+  { days: 90, label: "90 days" },
+];
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(Date.now());
+const addDays = (from: string, days: number) => {
+  const [y, m, d] = from.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+};
+const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 
 export function JobForm({ mode, initial }: { mode: "create" | "edit"; initial?: Job }) {
   const navigate = useNavigate();
@@ -37,7 +56,12 @@ export function JobForm({ mode, initial }: { mode: "create" | "edit"; initial?: 
   const [description, setDescription] = useState(initial?.description ?? "");
   const [mustHave, setMustHave] = useState((initial?.must_have_skills ?? []).join(", "));
   const [niceToHave, setNiceToHave] = useState((initial?.nice_to_have_skills ?? []).join(", "));
-  const [status, setStatus] = useState<"open" | "closed">(initial?.status ?? "open");
+  const filled = initial?.status === "filled";
+  const [status, setStatus] = useState<"open" | "closed">(initial?.status === "closed" ? "closed" : "open");
+  const [postedDate, setPostedDate] = useState(initial?.posted_date?.slice(0, 10) ?? today());
+  const [expiryDate, setExpiryDate] = useState(initial?.expiry_date?.slice(0, 10) ?? (initial ? "" : addDays(today(), 30)));
+  const duration = expiryDate ? daysBetween(postedDate, expiryDate) : null;
+  const expired = !!expiryDate && expiryDate < today();
 
   function parseSkills(raw: string): string[] {
     return raw.split(",").map((s) => s.trim()).filter(Boolean);
@@ -58,14 +82,18 @@ export function JobForm({ mode, initial }: { mode: "create" | "edit"; initial?: 
       must_have_skills: parseSkills(mustHave),
       nice_to_have_skills: parseSkills(niceToHave),
       status,
+      posted_date: postedDate || null,
+      expiry_date: expiryDate || null,
     };
     try {
       if (mode === "create") {
-        await adminCreateJobFn({ data: payload });
+        const { id } = await adminCreateJobFn({ data: payload });
+        // Straight to the mandate so the ranked candidates are visible immediately.
+        await navigate({ to: "/admin/jobs/$id", params: { id } });
       } else {
         await adminUpdateJobFn({ data: { id: initial!.id, ...payload } });
+        await navigate({ to: "/admin/jobs" });
       }
-      await navigate({ to: "/admin/jobs" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
       setBusy(false);
@@ -84,7 +112,7 @@ export function JobForm({ mode, initial }: { mode: "create" | "edit"; initial?: 
             <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="e.g. Senior Solicitor" />
           </AdminField>
           <AdminField label="Company">
-            <input className={inputCls} value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Cranbrook Legal" />
+            <input className={inputCls} value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Client company (optional)" />
           </AdminField>
         </div>
 
@@ -124,11 +152,40 @@ export function JobForm({ mode, initial }: { mode: "create" | "edit"; initial?: 
           <input className={inputCls} value={niceToHave} onChange={(e) => setNiceToHave(e.target.value)} placeholder="Arbitration, International law…" />
         </AdminField>
 
+        <div className="grid grid-cols-2 gap-4">
+          <AdminField label="Posted on">
+            <input className={inputCls} type="date" value={postedDate} onChange={(e) => setPostedDate(e.target.value)} required />
+          </AdminField>
+          <AdminField label="Closes on" hint={expiryDate ? (expired ? "Closing date has passed — hidden from candidates." : `Open for ${duration} day${duration === 1 ? "" : "s"}.`) : "No closing date — stays open until you close it."}>
+            <input className={inputCls} type="date" min={postedDate} value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+          </AdminField>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 -mt-2">
+          <span className="text-xs text-ink-mute">Duration:</span>
+          {DURATIONS.map((d) => (
+            <button
+              key={d.days}
+              type="button"
+              onClick={() => setExpiryDate(addDays(postedDate || today(), d.days))}
+              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${duration === d.days ? "border-ink text-ink" : "border-rule text-ink-soft hover:border-ink"}`}
+            >
+              {d.label}
+            </button>
+          ))}
+          <button type="button" onClick={() => setExpiryDate("")} className={`text-[11px] px-2.5 py-1 rounded-full border ${!expiryDate ? "border-ink text-ink" : "border-rule text-ink-soft hover:border-ink"}`}>
+            No closing date
+          </button>
+        </div>
+
         <AdminField label="Status">
-          <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value as "open" | "closed")}>
-            <option value="open">Open — active in matching and discovery</option>
-            <option value="closed">Closed — hidden from candidates</option>
-          </select>
+          {filled ? (
+            <p className="text-sm text-ink-soft">Filled — reopen it from Mandate status below to change this.</p>
+          ) : (
+            <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value as "open" | "closed")}>
+              <option value="open">Open — active in matching and discovery until the closing date</option>
+              <option value="closed">Closed — hidden from candidates</option>
+            </select>
+          )}
         </AdminField>
 
         {error && (
@@ -137,9 +194,14 @@ export function JobForm({ mode, initial }: { mode: "create" | "edit"; initial?: 
 
         <div className="flex gap-3 pt-2">
           <AdminBtn variant="primary" type="submit" disabled={busy}>
-            {busy ? "Saving…" : mode === "create" ? "Create mandate" : "Save changes"}
+            {busy ? "Saving…" : mode === "create" ? "Post mandate and rank candidates" : "Save changes"}
           </AdminBtn>
           <AdminBtn onClick={() => navigate({ to: "/admin/jobs" })}>Cancel</AdminBtn>
+          {mode === "edit" && (
+            <Link to="/app/jobs/$id" params={{ id: initial!.id }} className="text-[12px] px-3.5 py-1.5 underline text-ink-soft">
+              Open pipeline
+            </Link>
+          )}
         </div>
       </form>
     </>

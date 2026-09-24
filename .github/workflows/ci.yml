@@ -85,6 +85,8 @@ jobs:
         run: |
           eval "$(supabase status -o env)"
           TEST_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" node scripts/test-media-postgres.ts
+      - name: Mandate duration, ranking, fill and reopen
+        run: node scripts/test-jobs-postgres.ts
       - name: Outreach log, CSV export and chart queries
         run: node scripts/test-admin-tools-postgres.ts
       - name: Privacy erasure, audit attribution and AI budget policies
