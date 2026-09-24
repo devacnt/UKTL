@@ -252,6 +252,57 @@ try {
           sub`INSERT INTO bookings(id,created_at,auth_user_id,user_email,contact_name,contact_email,status,source,starts_at,ends_at) VALUES('comm-stale',${now},${owner},'owner@example.invalid','Owner','owner@example.invalid','confirmed','native',${now + 86400000},${now + 88200000})`,
       ),
     );
+    // Outlook uses transaction IDs and private-property lookup before any create.
+    await tx`DELETE FROM calendar_connections`;
+    await tx`INSERT INTO bookings(id,created_at,auth_user_id,user_email,contact_name,contact_email,status,source,starts_at,ends_at) VALUES('comm-outlook',${now},${owner},'owner@example.invalid','Owner','owner@example.invalid','confirmed','native',${now + 10800000},${now + 12600000})`;
+    Object.assign(env, {
+      MICROSOFT_CALENDAR_CLIENT_ID: "test-ms-client",
+      MICROSOFT_CALENDAR_CLIENT_SECRET: "test-ms-secret",
+    });
+    const msUrl = new URL(await startCalendarConnection(env, "outlook", staff));
+    let msCreated = 0,
+      msDeleted = 0;
+    globalThis.fetch = async (input: any, init: any) => {
+      const u = new URL(String(input));
+      if (u.hostname === "login.microsoftonline.com")
+        return Response.json({ access_token: "test-ms-access", refresh_token: "test-ms-refresh" });
+      if (u.pathname === "/v1.0/me/calendarView")
+        return Response.json({
+          value: [
+            {
+              showAs: "busy",
+              start: { dateTime: new Date(now + 72000000).toISOString(), timeZone: "UTC" },
+              end: { dateTime: new Date(now + 73800000).toISOString(), timeZone: "UTC" },
+            },
+          ],
+        });
+      if (u.pathname === "/v1.0/me/events" && init.method === "GET")
+        return Response.json({ value: msCreated ? [{ id: "ms-event" }] : [] });
+      if (init.method === "POST") {
+        msCreated++;
+        assert.ok(JSON.parse(init.body).transactionId);
+        return Response.json({ id: "ms-event" }, { status: 201 });
+      }
+      if (init.method === "DELETE") {
+        msDeleted++;
+        return new Response(null, { status: 204 });
+      }
+      throw new Error("Unexpected Outlook provider call");
+    };
+    await finishCalendarConnection(
+      env,
+      "outlook",
+      staff,
+      msUrl.searchParams.get("state")!,
+      "synthetic-ms-code",
+    );
+    assert.equal((await syncCalendar(env, "outlook", now)).status, "synced");
+    assert.equal(msCreated, 1);
+    assert.equal((await syncCalendar(env, "outlook", now + 1000)).status, "synced");
+    assert.equal(msCreated, 1);
+    await tx`UPDATE bookings SET status='cancelled' WHERE id='comm-outlook'`;
+    assert.equal((await syncCalendar(env, "outlook", now + 2000)).status, "synced");
+    assert.equal(msDeleted, 1);
     console.log(
       "Communications PostgreSQL: ownership, consent, frozen audience, reminder dedupe/cancellation/retry, OAuth state, encrypted credentials, calendar sync/erasure and stale-calendar gate passed",
     );
