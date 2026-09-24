@@ -16,7 +16,7 @@ for (const width of [320, 390, 768, 1440]) {
         }
         return { left: rect.left, right: rect.right, width: window.innerWidth, visible, overflow: el.scrollWidth > el.clientWidth + 1 };
       });
-      expect(metrics.visible).toBe(true);
+      expect(metrics.visible, await heading.textContent() ?? "Landing text").toBe(true);
       expect(metrics.left).toBeGreaterThanOrEqual(0);
       expect(metrics.right).toBeLessThanOrEqual(metrics.width);
       expect(metrics.overflow).toBe(false);

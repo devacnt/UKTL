@@ -374,11 +374,16 @@
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
+    animation-delay: 0ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .title-line > span { transform: none; }
+  .title-line > span, .eyebrow-rise, .foot-rise {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
   .word > span { transform: none; }
   .route-path { stroke-dashoffset: 0; }
   .route-node { opacity: 1; }
