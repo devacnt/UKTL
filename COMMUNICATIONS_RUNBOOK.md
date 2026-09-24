@@ -4,7 +4,7 @@ Implementation checkpoint: 24 September 2026. Hosted acceptance remains open unt
 
 ## Database and server configuration
 
-Apply the two previously pending migrations, `20260924122319_native_calendar_media_outreach` and `20260924125857_job_lifecycle_and_fulfilment`, before the new `20260924140340_communications_calendar_sync` migration. The third migration is required for these new features. Replay and PostgreSQL regression tests must pass first. Backend-only tables deny browser database access; every application handler authenticates its own user/staff role.
+Apply the two previously pending migrations, `20260924142748_native_calendar_media_outreach` and `20260924142808_job_lifecycle_and_fulfilment`, before the new `20260924142817_communications_calendar_sync` migration. The third migration is required for these new features. Replay and PostgreSQL regression tests must pass first. Backend-only tables deny browser database access; every application handler authenticates its own user/staff role.
 
 Lovable's server runtime must supply `DATA_BACKEND=supabase`, `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SITE_URL=https://uktl.lovable.app`, `RESEND_API_KEY` and `CRON_SECRET`. Never expose database/provider credentials in browser-prefixed variables. Configure the existing verified Resend sender before testing actual delivery. Missing configuration fails closed.
 
