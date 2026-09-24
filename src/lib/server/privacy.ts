@@ -43,6 +43,8 @@ export async function exportOwnData(env: AppEnv, userId: string) {
       "bookings",
       "SELECT to_jsonb(b)-'provider_invitee_uri'-'provider_event_uri' AS record FROM bookings b WHERE auth_user_id=?::uuid LIMIT 1001",
     ],
+    ["messages", `SELECT m.id,m.subject,m.body,m.created_at,m.read_at FROM candidate_messages m WHERE m.candidate_id IN (${own}) AND m.status='sent' LIMIT 1001`],
+    ["communication_preferences", "SELECT campaigns_enabled,updated_at FROM communication_preferences WHERE user_id=?::uuid"],
     [
       "privacy_requests",
       "SELECT id,kind,status,created_at,updated_at,resolution FROM privacy_requests WHERE user_id=?::uuid LIMIT 1001",

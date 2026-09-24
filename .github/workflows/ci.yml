@@ -87,6 +87,8 @@ jobs:
           TEST_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" node scripts/test-media-postgres.ts
       - name: Mandate duration, ranking, fill and reopen
         run: node scripts/test-jobs-postgres.ts
+      - name: Inbox, campaign consent, reminders and calendar synchronization
+        run: node scripts/test-communications-postgres.ts
       - name: Outreach log, CSV export and chart queries
         run: node scripts/test-admin-tools-postgres.ts
       - name: Privacy erasure, audit attribution and AI budget policies

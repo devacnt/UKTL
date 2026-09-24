@@ -20,20 +20,25 @@ import { Route as ReachRouteImport } from './routes/reach'
 import { Route as SectorsRouteImport } from './routes/sectors'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin/analytics'
 import { Route as AdminBookingsRouteImport } from './routes/admin/bookings'
+import { Route as AdminCalendarRouteImport } from './routes/admin/calendar'
+import { Route as AdminCampaignsRouteImport } from './routes/admin/campaigns'
 import { Route as AdminEnquiriesRouteImport } from './routes/admin/enquiries'
 import { Route as AdminHrRouteImport } from './routes/admin/hr'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminOperationsRouteImport } from './routes/admin/operations'
 import { Route as AdminProcessingRouteImport } from './routes/admin/processing'
+import { Route as ApiCommunicationsRouteImport } from './routes/api/communications'
 import { Route as ApiMaintenanceRouteImport } from './routes/api/maintenance'
 import { Route as ApiReedSyncRouteImport } from './routes/api/reed-sync'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppActivityRouteImport } from './routes/app/activity'
 import { Route as AppConsultationsRouteImport } from './routes/app/consultations'
 import { Route as AppDiscoverRouteImport } from './routes/app/discover'
+import { Route as AppMessagesRouteImport } from './routes/app/messages'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppUploadRouteImport } from './routes/app/upload'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -62,6 +67,7 @@ import { Route as AppHrLibraryRouteImport } from './routes/app/hr/library'
 import { Route as AppJobsIndexRouteImport } from './routes/app/jobs/index'
 import { Route as AppJobsIdRouteImport } from './routes/app/jobs/$id'
 import { Route as ApiAdminExportKindRouteImport } from './routes/api/admin/export/$kind'
+import { Route as ApiCalendarCallbackProviderRouteImport } from './routes/api/calendar/callback/$provider'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,6 +124,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -131,6 +142,16 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
 const AdminBookingsRoute = AdminBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCalendarRoute = AdminCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCampaignsRoute = AdminCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminEnquiriesRoute = AdminEnquiriesRouteImport.update({
@@ -157,6 +178,11 @@ const AdminProcessingRoute = AdminProcessingRouteImport.update({
   id: '/processing',
   path: '/processing',
   getParentRoute: () => AdminRoute,
+} as any)
+const ApiCommunicationsRoute = ApiCommunicationsRouteImport.update({
+  id: '/api/communications',
+  path: '/api/communications',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMaintenanceRoute = ApiMaintenanceRouteImport.update({
   id: '/api/maintenance',
@@ -186,6 +212,11 @@ const AppConsultationsRoute = AppConsultationsRouteImport.update({
 const AppDiscoverRoute = AppDiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMessagesRoute = AppMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -328,6 +359,12 @@ const ApiAdminExportKindRoute = ApiAdminExportKindRouteImport.update({
   path: '/api/admin/export/$kind',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCalendarCallbackProviderRoute =
+  ApiCalendarCallbackProviderRouteImport.update({
+    id: '/api/calendar/callback/$provider',
+    path: '/api/calendar/callback/$provider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -341,18 +378,23 @@ export interface FileRoutesByFullPath {
   '/sectors': typeof SectorsRoute
   '/services': typeof ServicesRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/enquiries': typeof AdminEnquiriesRoute
   '/admin/hr': typeof AdminHrRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/processing': typeof AdminProcessingRoute
+  '/api/communications': typeof ApiCommunicationsRoute
   '/api/maintenance': typeof ApiMaintenanceRoute
   '/api/reed-sync': typeof ApiReedSyncRoute
   '/app/activity': typeof AppActivityRoute
   '/app/consultations': typeof AppConsultationsRoute
   '/app/discover': typeof AppDiscoverRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app/upload': typeof AppUploadRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -383,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/app/hr/': typeof AppHrIndexRoute
   '/app/jobs/': typeof AppJobsIndexRoute
   '/api/admin/export/$kind': typeof ApiAdminExportKindRoute
+  '/api/calendar/callback/$provider': typeof ApiCalendarCallbackProviderRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -394,18 +437,23 @@ export interface FileRoutesByTo {
   '/sectors': typeof SectorsRoute
   '/services': typeof ServicesRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/enquiries': typeof AdminEnquiriesRoute
   '/admin/hr': typeof AdminHrRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/processing': typeof AdminProcessingRoute
+  '/api/communications': typeof ApiCommunicationsRoute
   '/api/maintenance': typeof ApiMaintenanceRoute
   '/api/reed-sync': typeof ApiReedSyncRoute
   '/app/activity': typeof AppActivityRoute
   '/app/consultations': typeof AppConsultationsRoute
   '/app/discover': typeof AppDiscoverRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app/upload': typeof AppUploadRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -436,6 +484,7 @@ export interface FileRoutesByTo {
   '/app/hr': typeof AppHrIndexRoute
   '/app/jobs': typeof AppJobsIndexRoute
   '/api/admin/export/$kind': typeof ApiAdminExportKindRoute
+  '/api/calendar/callback/$provider': typeof ApiCalendarCallbackProviderRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -450,18 +499,23 @@ export interface FileRoutesById {
   '/sectors': typeof SectorsRoute
   '/services': typeof ServicesRoute
   '/terms': typeof TermsRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/campaigns': typeof AdminCampaignsRoute
   '/admin/enquiries': typeof AdminEnquiriesRoute
   '/admin/hr': typeof AdminHrRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/processing': typeof AdminProcessingRoute
+  '/api/communications': typeof ApiCommunicationsRoute
   '/api/maintenance': typeof ApiMaintenanceRoute
   '/api/reed-sync': typeof ApiReedSyncRoute
   '/app/activity': typeof AppActivityRoute
   '/app/consultations': typeof AppConsultationsRoute
   '/app/discover': typeof AppDiscoverRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/profile': typeof AppProfileRoute
   '/app/upload': typeof AppUploadRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -492,6 +546,7 @@ export interface FileRoutesById {
   '/app/hr/': typeof AppHrIndexRoute
   '/app/jobs/': typeof AppJobsIndexRoute
   '/api/admin/export/$kind': typeof ApiAdminExportKindRoute
+  '/api/calendar/callback/$provider': typeof ApiCalendarCallbackProviderRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -507,18 +562,23 @@ export interface FileRouteTypes {
     | '/sectors'
     | '/services'
     | '/terms'
+    | '/unsubscribe'
     | '/admin/analytics'
     | '/admin/bookings'
+    | '/admin/calendar'
+    | '/admin/campaigns'
     | '/admin/enquiries'
     | '/admin/hr'
     | '/admin/login'
     | '/admin/operations'
     | '/admin/processing'
+    | '/api/communications'
     | '/api/maintenance'
     | '/api/reed-sync'
     | '/app/activity'
     | '/app/consultations'
     | '/app/discover'
+    | '/app/messages'
     | '/app/profile'
     | '/app/upload'
     | '/auth/callback'
@@ -549,6 +609,7 @@ export interface FileRouteTypes {
     | '/app/hr/'
     | '/app/jobs/'
     | '/api/admin/export/$kind'
+    | '/api/calendar/callback/$provider'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -560,18 +621,23 @@ export interface FileRouteTypes {
     | '/sectors'
     | '/services'
     | '/terms'
+    | '/unsubscribe'
     | '/admin/analytics'
     | '/admin/bookings'
+    | '/admin/calendar'
+    | '/admin/campaigns'
     | '/admin/enquiries'
     | '/admin/hr'
     | '/admin/login'
     | '/admin/operations'
     | '/admin/processing'
+    | '/api/communications'
     | '/api/maintenance'
     | '/api/reed-sync'
     | '/app/activity'
     | '/app/consultations'
     | '/app/discover'
+    | '/app/messages'
     | '/app/profile'
     | '/app/upload'
     | '/auth/callback'
@@ -602,6 +668,7 @@ export interface FileRouteTypes {
     | '/app/hr'
     | '/app/jobs'
     | '/api/admin/export/$kind'
+    | '/api/calendar/callback/$provider'
   id:
     | '__root__'
     | '/'
@@ -615,18 +682,23 @@ export interface FileRouteTypes {
     | '/sectors'
     | '/services'
     | '/terms'
+    | '/unsubscribe'
     | '/admin/analytics'
     | '/admin/bookings'
+    | '/admin/calendar'
+    | '/admin/campaigns'
     | '/admin/enquiries'
     | '/admin/hr'
     | '/admin/login'
     | '/admin/operations'
     | '/admin/processing'
+    | '/api/communications'
     | '/api/maintenance'
     | '/api/reed-sync'
     | '/app/activity'
     | '/app/consultations'
     | '/app/discover'
+    | '/app/messages'
     | '/app/profile'
     | '/app/upload'
     | '/auth/callback'
@@ -657,6 +729,7 @@ export interface FileRouteTypes {
     | '/app/hr/'
     | '/app/jobs/'
     | '/api/admin/export/$kind'
+    | '/api/calendar/callback/$provider'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -671,6 +744,8 @@ export interface RootRouteChildren {
   SectorsRoute: typeof SectorsRoute
   ServicesRoute: typeof ServicesRoute
   TermsRoute: typeof TermsRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
+  ApiCommunicationsRoute: typeof ApiCommunicationsRoute
   ApiMaintenanceRoute: typeof ApiMaintenanceRoute
   ApiReedSyncRoute: typeof ApiReedSyncRoute
   ApiConsultationsIdRoute: typeof ApiConsultationsIdRoute
@@ -678,6 +753,7 @@ export interface RootRouteChildren {
   ApiOperationsHealthRoute: typeof ApiOperationsHealthRoute
   ApiPrivacyExportRoute: typeof ApiPrivacyExportRoute
   ApiAdminExportKindRoute: typeof ApiAdminExportKindRoute
+  ApiCalendarCallbackProviderRoute: typeof ApiCalendarCallbackProviderRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -759,6 +835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -778,6 +861,20 @@ declare module '@tanstack/react-router' {
       path: '/bookings'
       fullPath: '/admin/bookings'
       preLoaderRoute: typeof AdminBookingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/calendar': {
+      id: '/admin/calendar'
+      path: '/calendar'
+      fullPath: '/admin/calendar'
+      preLoaderRoute: typeof AdminCalendarRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/campaigns': {
+      id: '/admin/campaigns'
+      path: '/campaigns'
+      fullPath: '/admin/campaigns'
+      preLoaderRoute: typeof AdminCampaignsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/enquiries': {
@@ -814,6 +911,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/processing'
       preLoaderRoute: typeof AdminProcessingRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/communications': {
+      id: '/api/communications'
+      path: '/api/communications'
+      fullPath: '/api/communications'
+      preLoaderRoute: typeof ApiCommunicationsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/maintenance': {
       id: '/api/maintenance'
@@ -855,6 +959,13 @@ declare module '@tanstack/react-router' {
       path: '/discover'
       fullPath: '/app/discover'
       preLoaderRoute: typeof AppDiscoverRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/messages': {
+      id: '/app/messages'
+      path: '/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AppMessagesRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/profile': {
@@ -1053,12 +1164,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminExportKindRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/calendar/callback/$provider': {
+      id: '/api/calendar/callback/$provider'
+      path: '/api/calendar/callback/$provider'
+      fullPath: '/api/calendar/callback/$provider'
+      preLoaderRoute: typeof ApiCalendarCallbackProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminCalendarRoute: typeof AdminCalendarRoute
+  AdminCampaignsRoute: typeof AdminCampaignsRoute
   AdminEnquiriesRoute: typeof AdminEnquiriesRoute
   AdminHrRoute: typeof AdminHrRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -1077,6 +1197,8 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminBookingsRoute: AdminBookingsRoute,
+  AdminCalendarRoute: AdminCalendarRoute,
+  AdminCampaignsRoute: AdminCampaignsRoute,
   AdminEnquiriesRoute: AdminEnquiriesRoute,
   AdminHrRoute: AdminHrRoute,
   AdminLoginRoute: AdminLoginRoute,
@@ -1098,6 +1220,7 @@ interface AppRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppConsultationsRoute: typeof AppConsultationsRoute
   AppDiscoverRoute: typeof AppDiscoverRoute
+  AppMessagesRoute: typeof AppMessagesRoute
   AppProfileRoute: typeof AppProfileRoute
   AppUploadRoute: typeof AppUploadRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -1115,6 +1238,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppConsultationsRoute: AppConsultationsRoute,
   AppDiscoverRoute: AppDiscoverRoute,
+  AppMessagesRoute: AppMessagesRoute,
   AppProfileRoute: AppProfileRoute,
   AppUploadRoute: AppUploadRoute,
   AppIndexRoute: AppIndexRoute,
@@ -1162,6 +1286,8 @@ const rootRouteChildren: RootRouteChildren = {
   SectorsRoute: SectorsRoute,
   ServicesRoute: ServicesRoute,
   TermsRoute: TermsRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
+  ApiCommunicationsRoute: ApiCommunicationsRoute,
   ApiMaintenanceRoute: ApiMaintenanceRoute,
   ApiReedSyncRoute: ApiReedSyncRoute,
   ApiConsultationsIdRoute: ApiConsultationsIdRoute,
@@ -1169,6 +1295,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOperationsHealthRoute: ApiOperationsHealthRoute,
   ApiPrivacyExportRoute: ApiPrivacyExportRoute,
   ApiAdminExportKindRoute: ApiAdminExportKindRoute,
+  ApiCalendarCallbackProviderRoute: ApiCalendarCallbackProviderRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
