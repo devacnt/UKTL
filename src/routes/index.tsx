@@ -277,9 +277,10 @@ function Platform() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (!("IntersectionObserver" in window)) { setActive(true); return; }
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setActive(true); obs.disconnect(); } },
-      { threshold: 0.2 },
+      { threshold: 0 },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -348,12 +349,12 @@ function Platform() {
             {steps.map((step, i) => (
               <div
                 key={step.n}
-                className={`pt-8 pr-6 pb-8 transition-all duration-700 [transition-timing-function:var(--ease-publication)] ${active ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} ${i < steps.length - 1 ? "md:border-r md:border-paper/10" : ""}`}
+                className={`pt-8 pr-6 pb-8 transition-all duration-700 [transition-timing-function:var(--ease-publication)] opacity-100 translate-y-0 ${i < steps.length - 1 ? "md:border-r md:border-paper/10" : ""}`}
                 style={{ transitionDelay: active ? `${300 + i * 140}ms` : "0ms" }}
               >
                 <div className="font-mono text-[10px] text-paper/80 tracking-[0.1em] mb-6">{step.n}</div>
                 <div
-                  className={`font-mono text-[20px] text-paper/80 mb-5 leading-none transition-all duration-700 ${active ? "scale-100 opacity-100" : "scale-50 opacity-0"}`}
+                  className={`font-mono text-[20px] text-paper/80 mb-5 leading-none transition-all duration-700 scale-100 opacity-100`}
                   style={{ transitionDelay: active ? `${500 + i * 140}ms` : "0ms" }}
                 >
                   {step.glyph}

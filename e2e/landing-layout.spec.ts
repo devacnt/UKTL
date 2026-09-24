@@ -5,7 +5,7 @@ for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
-    for (const heading of await page.locator("main h1, main h2").all()) {
+    for (const heading of await page.locator("main h1, main h2, main p").all()) {
       await heading.scrollIntoViewIfNeeded();
       await expect(heading).toBeVisible();
       const metrics = await heading.evaluate(el => {
