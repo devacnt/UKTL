@@ -1,11 +1,16 @@
 // Access Cloudflare bindings at runtime.
 // `cloudflare:workers` is only resolvable inside the Workers runtime, so we
-// dynamic-import it. Non-Workers environments will throw a clear error.
+// dynamic-import it. Other server runtimes use explicitly configured Supabase credentials.
 
 import { createPostgresDatabase } from "./postgres";
 import { createPrivateCvStorage } from "./storage";
 
 export type AppEnv = {
+  GOOGLE_CALENDAR_CLIENT_ID?: string;
+  GOOGLE_CALENDAR_CLIENT_SECRET?: string;
+  MICROSOFT_CALENDAR_CLIENT_ID?: string;
+  MICROSOFT_CALENDAR_CLIENT_SECRET?: string;
+  CALENDAR_ENCRYPTION_KEY?: string;
   DATA_BACKEND?: "d1" | "supabase";
   DATABASE_URL?: string;
   CRON_SECRET?: string;
@@ -39,17 +44,21 @@ let cached: AppEnv | null = null;
 export async function getEnv(): Promise<AppEnv> {
   if (cached) return cached;
   try {
-    const mod = (await import("cloudflare:workers")) as unknown as {
-      env: AppEnv;
-    };
-    cached = configureBackend(mod.env);
-    return cached;
-  } catch (err) {
-    throw new Error(
-      "Cloudflare bindings unavailable — run under wrangler/vite-cloudflare. " +
-        String(err),
-    );
-  }
+    const mod = (await import("cloudflare:workers")) as unknown as { env: AppEnv };
+    if (mod.env.DATA_BACKEND === "supabase" || mod.env.DB) {
+      cached = configureBackend(mod.env);
+      return cached;
+    }
+  } catch { /* Lovable's server runtime uses server-only environment variables. */ }
+  const values = typeof process !== "undefined" ? process.env : {};
+  if (values.DATA_BACKEND !== "supabase")
+    throw new Error("Server backend is not configured. Set DATA_BACKEND=supabase and the server credentials.");
+  const keys = ["DATA_BACKEND", "DATABASE_URL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
+    "SITE_URL", "CRON_SECRET", "CV_SCAN_URL", "CV_SCAN_TOKEN", "ANTHROPIC_API_KEY", "PARSE_PROVIDER", "PARSE_MODEL",
+    "AI_HOURLY_CALL_LIMIT", "REED_API_KEY", "RESEND_API_KEY", "GOOGLE_CALENDAR_CLIENT_ID", "GOOGLE_CALENDAR_CLIENT_SECRET",
+    "MICROSOFT_CALENDAR_CLIENT_ID", "MICROSOFT_CALENDAR_CLIENT_SECRET", "CALENDAR_ENCRYPTION_KEY"];
+  cached = configureBackend(Object.fromEntries(keys.map(key => [key, values[key]])) as unknown as AppEnv);
+  return cached;
 }
 
 export function configureBackend(env: AppEnv): AppEnv {

@@ -1,0 +1,34 @@
+name: Communications scheduler
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: communications-scheduler
+  cancel-in-progress: false
+jobs:
+  tick:
+    # Only the source repository sends. Mirrored workflows stay inert.
+    if: github.repository == 'devacnt/UKTL' && vars.COMMUNICATIONS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Sync calendars and deliver approved communications
+        env:
+          SITE_URL: ${{ vars.COMMUNICATIONS_SITE_URL }}
+          CRON_SECRET: ${{ secrets.COMMUNICATIONS_CRON_SECRET }}
+        run: |
+          set -eu
+          case "$SITE_URL" in https://*) ;; *) echo 'HTTPS site URL required'; exit 1;; esac
+          test -n "$CRON_SECRET"
+          failed=0
+          for scope in google outlook email; do
+            result=$(curl --silent --show-error --fail --max-time 180 --request POST \
+              --header "Authorization: Bearer $CRON_SECRET" \
+              "$SITE_URL/api/communications?scope=$scope") || { failed=1; continue; }
+            # Responses contain delivery states only. Never log credentials or message contents.
+            printf '%s\n' "$result" | jq -e '(.calendars // [] | all(.status == "synced" or .status == "busy")) and (.outcomes // [] | all(. != "failed"))' >/dev/null || failed=1
+          done
+          exit "$failed"

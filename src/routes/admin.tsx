@@ -29,6 +29,8 @@ const NAV = [
   { to: "/admin/candidates", label: "Candidates" },
   { to: "/admin/bookings", label: "Consultations" },
   { to: "/admin/enquiries", label: "Enquiries" },
+  { to: "/admin/campaigns", label: "Email campaigns" },
+  { to: "/admin/calendar", label: "Calendar sync" },
   { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/processing", label: "CV processing" },
   { to: "/admin/operations", label: "Operations & privacy" },
