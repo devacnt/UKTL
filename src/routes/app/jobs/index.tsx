@@ -1,14 +1,20 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { PageHeader, Pill } from "@/components/app/AppLayout";
+import { z } from "zod";
+import { filterJobs } from "@/lib/job-search";
 import { listJobsFn } from "@/lib/functions";
 
 export const Route = createFileRoute("/app/jobs/")({
+  validateSearch: (s) => z.object({ q: z.string().optional(), location: z.string().optional() }).parse(s),
   loader: async () => await listJobsFn(),
   component: JobsListPage,
 });
 
 function JobsListPage() {
-  const jobs = Route.useLoaderData();
+  const allJobs = Route.useLoaderData();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const jobs = filterJobs(allJobs, search.q ?? "", search.location ?? "");
   const { session } = useRouteContext({ from: "__root__" });
   const isStaff = session.isStaff;
 
@@ -31,6 +37,19 @@ function JobsListPage() {
         }
       />
 
+      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        <label className="text-sm">Role, company or skill
+          <input type="search" value={search.q ?? ""} onChange={e => void navigate({ search: { ...search, q: e.target.value || undefined }, replace: true })} className="block w-full border border-rule rounded p-3 mt-1 bg-paper" />
+        </label>
+        <label className="text-sm">Location
+          <input type="search" value={search.location ?? ""} onChange={e => void navigate({ search: { ...search, location: e.target.value || undefined }, replace: true })} className="block w-full border border-rule rounded p-3 mt-1 bg-paper" />
+        </label>
+      </div>
+      <div className="flex flex-wrap justify-between gap-4 mb-6">
+        <p role="status">{jobs.length} roles found</p>
+        {!isStaff && <Link to="/app/discover" search={search} className="underline">Swipe these roles →</Link>}
+      </div>
+      {jobs.length === 0 && <p className="text-ink-soft">No roles match these filters. Try another skill or location.</p>}
       <div className="grid md:grid-cols-2 gap-4">
         {jobs.map((j) => (
           <Link

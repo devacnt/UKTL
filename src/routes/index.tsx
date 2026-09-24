@@ -102,8 +102,8 @@ function Hero() {
         </div>
 
         <h1
-          className="font-display font-light leading-[0.93] tracking-[-0.03em] mt-8 text-ink"
-          style={{ fontSize: "clamp(52px, 8.5vw, 140px)", fontVariationSettings: '"opsz" 144, "SOFT" 35' }}
+          className="font-display font-light leading-[1.04] tracking-[-0.03em] mt-8 text-ink"
+          style={{ fontSize: "clamp(36px, 8.5vw, 140px)", fontVariationSettings: '"opsz" 144, "SOFT" 35' }}
         >
           <span className="title-line"><span style={{ animationDelay: "320ms" }}>Your next role,</span></span>
           <span className="title-line"><span style={{ animationDelay: "460ms" }}>matched to what</span></span>
@@ -277,9 +277,10 @@ function Platform() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (!("IntersectionObserver" in window)) { setActive(true); return; }
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setActive(true); obs.disconnect(); } },
-      { threshold: 0.2 },
+      { threshold: 0 },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -309,7 +310,7 @@ function Platform() {
         <Reveal>
           <div className="flex items-start justify-between gap-10 flex-col md:flex-row">
             <div className="md:max-w-[48ch]">
-              <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/40 mb-5 flex items-center gap-3">
+              <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/80 mb-5 flex items-center gap-3">
                 <span className="w-6 h-px bg-paper/40" />
                 How it works
               </div>
@@ -319,7 +320,7 @@ function Platform() {
               >
                 <Words text="One upload." accent="Every role we're hiring for." accentColor="oklch(0.765 0.055 263)" />
               </h2>
-              <p className="text-paper/50 text-[15px] leading-relaxed max-w-[48ch] mt-5">
+              <p className="text-paper/80 text-[15px] leading-relaxed max-w-[48ch] mt-5">
                 Create a free account and upload your CV. Once it's processed you'll have your score, your improvement tips and your best-matched roles — and our consultants see your strongest matches when they're shortlisting.
               </p>
             </div>
@@ -348,12 +349,12 @@ function Platform() {
             {steps.map((step, i) => (
               <div
                 key={step.n}
-                className={`pt-8 pr-6 pb-8 transition-all duration-700 [transition-timing-function:var(--ease-publication)] ${active ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} ${i < steps.length - 1 ? "md:border-r md:border-paper/10" : ""}`}
+                className={`pt-8 pr-6 pb-8 transition-all duration-700 [transition-timing-function:var(--ease-publication)] opacity-100 translate-y-0 ${i < steps.length - 1 ? "md:border-r md:border-paper/10" : ""}`}
                 style={{ transitionDelay: active ? `${300 + i * 140}ms` : "0ms" }}
               >
-                <div className="font-mono text-[10px] text-paper/30 tracking-[0.1em] mb-6">{step.n}</div>
+                <div className="font-mono text-[10px] text-paper/80 tracking-[0.1em] mb-6">{step.n}</div>
                 <div
-                  className={`font-mono text-[20px] text-paper/25 mb-5 leading-none transition-all duration-700 ${active ? "scale-100 opacity-100" : "scale-50 opacity-0"}`}
+                  className={`font-mono text-[20px] text-paper/80 mb-5 leading-none transition-all duration-700 scale-100 opacity-100`}
                   style={{ transitionDelay: active ? `${500 + i * 140}ms` : "0ms" }}
                 >
                   {step.glyph}
@@ -364,7 +365,7 @@ function Platform() {
                 >
                   {step.title}
                 </div>
-                <p className="text-[13px] text-paper/45 leading-relaxed m-0">{step.desc}</p>
+                <p className="text-[13px] text-paper/80 leading-relaxed m-0">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -537,7 +538,7 @@ function ContactCTA() {
         <Reveal>
           <div className="grid md:grid-cols-[3fr_2fr] gap-16 md:gap-24 items-center">
             <div>
-              <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/40 mb-6 flex items-center gap-3">
+              <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/80 mb-6 flex items-center gap-3">
                 <span className="w-6 h-px bg-paper/40" />
                 Get started
               </div>
@@ -550,7 +551,7 @@ function ContactCTA() {
             </div>
 
             <div className="flex flex-col gap-5">
-              <p className="text-paper/55 text-[15px] leading-[1.6]">
+              <p className="text-paper/80 text-[15px] leading-[1.6]">
                 Create a free account, upload your CV and see where you stand today. Questions first? A real person replies, usually within one working day.
               </p>
               <div className="flex flex-col gap-3 pt-2">
@@ -568,11 +569,11 @@ function ContactCTA() {
                 </Link>
               </div>
               <div className="pt-4 border-t border-paper/10">
-                <div className="font-mono text-[11px] tracking-[0.1em] uppercase text-paper/30 mb-2">Office</div>
-                <div className="text-[14px] text-paper/50 leading-relaxed">
+                <div className="font-mono text-[11px] tracking-[0.1em] uppercase text-paper/80 mb-2">Office</div>
+                <div className="text-[14px] text-paper/80 leading-relaxed">
                   Chancery House, 53–64 Chancery Lane<br />
                   London WC2A 1QS<br />
-                  <span className="text-paper/30">Also: Dubai · Abu Dhabi</span>
+                  <span className="text-paper/80">Also: Dubai · Abu Dhabi</span>
                 </div>
               </div>
             </div>

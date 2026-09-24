@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { SeniorityEnum } from "./profile.ts";
 
-export const JobStatusEnum = z.enum(["open", "closed"]);
+export const JobStatusEnum = z.enum(["open", "closed", "filled"]);
 export type JobStatus = z.infer<typeof JobStatusEnum>;
 
 export const JobSchema = z.object({
@@ -24,6 +24,11 @@ export const JobSchema = z.object({
   posted_date: z.string().nullable().optional(),
   expiry_date: z.string().nullable().optional(),
   status: JobStatusEnum,
+  source: z.string().nullable().optional(),
+  filled_candidate_id: z.string().nullable().optional(),
+  filled_candidate_name: z.string().nullable().optional(),
+  filled_at: z.number().nullable().optional(),
+  filled_note: z.string().nullable().optional(),
 });
 export type Job = z.infer<typeof JobSchema>;
 

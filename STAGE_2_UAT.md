@@ -55,3 +55,13 @@ Read-only metadata inspection is implemented on `/admin/processing`; automatic d
 ## Reed checkpoint acceptance
 
 Use REED_SYNC.md for configuration and activation. Verify both sectors against real provider data, salary units, date parsing, repeated-import updates, preserved staff closure and expired-interest rejection. Exercise malformed detail responses, partial searches and dispatch failures. Confirm cron execution AND the final HTTP/import result. Apply the resumable migration to isolated staging first. Interrupt and reclaim a worker; prove stale workers cannot write and a retry resumes its saved cursor. Verify pause after three failures, explicit admin retry, all configured queries finishing, and same-day idling. Review search coverage and batch capacity against real Reed data; match-cache refresh remains open implementation work.
+
+## Mandate posting, ranking and fulfilment (added 24 September 2026)
+
+| Journey | Expected evidence |
+| --- | --- |
+| Post a mandate | Admin sets posted and closing dates (2 weeks / 30 / 60 / 90 days or none). After its closing date it disappears from candidate discovery and shows `expired` in Admin → Mandates. |
+| Rank candidates | "Qualified candidates" lists every parsed CV scored against the mandate, highest first, with the skills/experience/seniority/location breakdown, matched and missing must-haves and CV quality. "Qualified" needs 60+ and every must-have. A consultant reviews each shortlist; scores are not decisions. |
+| Add to pipeline | Selected candidates appear in the mandate pipeline at "Matched"; re-adding never resets a later stage. |
+| Mark filled | The mandate shows the placed candidate, date and note, leaves discovery, and that candidate's stage becomes Placed (stage history recorded). A second fill is refused until the mandate is reopened. Editing a filled mandate keeps it filled. |
+| Reopen / delete | Reopen clears the placement and sets a new closing date (past dates refused). Delete removes the mandate and its pipeline after confirmation; close or fill to keep history. Erasing the placed candidate keeps the mandate filled with no name. |

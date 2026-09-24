@@ -83,6 +83,7 @@ The root route loads the session once per navigation (`getSessionFn` → `contex
 - **FAQ media** (`server/media.ts`, `faq-functions.ts`): browser uploads straight to the private `uktl-videos` bucket with a signed upload URL; `attachMedia` verifies size, MIME and magic bytes before referencing it. Formats: MP4/WebM ≤100 MB, WebVTT ≤1 MB, JPEG/PNG/WebP ≤5 MB. Approval (`reviewed_at`) is withdrawn by a trigger on any content/media change.
 - **Outreach** (`server/admin-tools.ts`, `outreach-templates.ts`): staff-only, logged in `candidate_messages`, idempotent Resend key per message, verified account email preferred.
 - **CSV** (`/api/admin/export/:kind`): admin + MFA, formula-injection safe, audited in the same transaction.
+- **Mandates** (`server/job-tools.ts`, `job-functions.ts`, `/admin/jobs/:id`): posting/closing dates use `posted_date`/`expiry_date` (expired mandates leave discovery); `rankCandidatesForJob` scores every parsed CV (newest 5,000) with the rules-based `scoreMatch` and labels "qualified" (score ≥ 60 and every must-have). `addToPipeline` never resets a stage. `recruitment.fill_job()` marks a mandate `filled` and the placed candidate's match `placed` in one transaction; `reopenJob` clears it. Editing a filled mandate keeps it filled.
 
 ## Data model (D1)
 
@@ -100,7 +101,7 @@ The root route loads the session once per navigation (`getSessionFn` → `contex
 
 ## Known gaps (not bugs — unbuilt)
 
-Charts on the analytics page (Recharts installed, unused) · Calendly embed on the HR answer page · scheduled Reed sync (manual button only) · candidate email outreach · CSV export · GDPR delete/export tooling · comprehensive staff audit trail.
+Scheduled Reed sync (manual button only) · bulk/scheduled candidate email campaigns (one-to-one outreach exists) · candidate-visible message history · appointment reminder emails · staff calendar sync (Google/Outlook) · AI-assisted (non-rules) candidate ranking · D1 legacy support for calendar, media upload, outreach, exports and mandate fill (Supabase-only).
 
 
 ## Launch hardening verification
