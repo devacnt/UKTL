@@ -945,6 +945,7 @@ export const getEditableProfileFn=createServerFn({method:"GET"})
   .inputValidator((raw:unknown)=>z.object({id:z.string().min(1).max(100)}).parse(raw))
   .handler(async({data})=>{
     const viewer=await requireViewer(); const env=await getEnv();
+    if (!canAccessCandidate(viewer,viewer.userId)) throw new Error("Candidate account required");
     if(env.DATA_BACKEND!=="supabase") return null;
     const row=await env.DB.prepare("SELECT raw_profile,profile_revision FROM candidates WHERE id=? AND auth_user_id=?")
       .bind(data.id,viewer.userId).first<{raw_profile:string|null;profile_revision:number}>();
@@ -955,6 +956,7 @@ export const saveEditableProfileFn=createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>z.object({id:z.string().min(1).max(100),revision:z.number().int().nonnegative(),profile:EditableProfileSchema}).parse(raw))
   .handler(async({data})=>{
     const viewer=await requireViewer(); const env=await getEnv();
+    if (!canAccessCandidate(viewer,viewer.userId)) throw new Error("Candidate account required");
     if(env.DATA_BACKEND!=="supabase") throw new Error("Profile editing requires the Supabase backend");
     await enforceRateLimit(env,"cvUpload",viewer.userId!);
     try {

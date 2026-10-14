@@ -55,6 +55,7 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
           export CHROME_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; process.stdout.write(chromium.executablePath())")"
           npx --yes lighthouse@13.5.0 http://127.0.0.1:5173/ --chrome-flags="--headless --no-sandbox" --output=json --output=html --output-path=./lighthouse-mobile --quiet
+          node --input-type=module -e "import fs from 'node:fs'; const r=JSON.parse(fs.readFileSync('lighthouse-mobile.report.json','utf8')); console.log('LIGHTHOUSE_LOCAL_MOBILE',JSON.stringify(Object.fromEntries(Object.entries(r.categories).map(([k,v])=>[k,v.score]))));"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
