@@ -29,7 +29,7 @@ const offers = [
     body: "Your CV is read and scored across the four things recruiters look at first: your contact details, your experience, your skills and your education. You see the overall score and the score for each section, so you know exactly what's working and what isn't.",
     points: [
       "Overall score out of 100",
-      "Separate scores for contact details, experience, skills and education",
+      "Separate scores for contact details, experience, skills, education, and clarity and structure",
       "A structured profile built from your CV that you can check and correct",
       "Upload a new version any time — your score updates with it",
     ],

@@ -186,7 +186,7 @@ const SERVICES = [
   {
     num: "01",
     title: "A free CV score",
-    body: "Your CV is scored out of 100 across contact details, experience, skills and education — so you can see exactly where it's strong and where it may be costing you interviews.",
+    body: "Your CV is scored out of 100 across contact details, experience, skills, education, and clarity and structure — so you can see exactly where it's strong and where it may be costing you interviews.",
     link: "/auth/register",
   },
   {
