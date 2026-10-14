@@ -1,4 +1,4 @@
-# Phase 1 acceptance — 13 October 2026
+# Phase 1 acceptance — 14 October 2026
 
 Status: engineering changes under verification; **not accepted for production**.
 Hosting remains Lovable. Cloudflare work is excluded at the owner's request.
@@ -39,3 +39,10 @@ The upload page has an explicit browser-only simulation. It validates basic PDF/
 - Secure owner account creation, disposable authenticated test accounts, scanner service configuration and successful provider/worker execution still need verification.
 - Claude's unmerged guided-dashboard, profile editing, legal-page layout and content-brief commits were incorporated. Keep ASTRA_UX_REVIEW.md until its requested live walkthrough is actually complete.
 - Main repositories and Claude branch must be verified against the final release tree before marking synchronization complete.
+
+## Verification update — 14 October
+
+- 104 local unit tests, TypeScript and production build passed.
+- Initial expanded CI run 38476066672: all PostgreSQL migration replay, ownership, worker, HTTPS bridge and new employer/version policy checks passed. Browser checks: 195 passed; WebKit and mobile menu tap failed. Fixed the header backdrop filter containing-block issue and rerunning CI. Skipped credential-dependent tests remain unaccepted.
+- Both new migrations applied to UKTL with actual versions 20261014003811 and 20261014003816. Verified role RLS, anonymous denial, service-only batch RPC and CV version trigger.
+- Security advisor: leaked-password protection is disabled; enable it in Supabase Auth before live release. No new database-policy advisory was reported.
