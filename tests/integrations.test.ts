@@ -37,8 +37,8 @@ test("upstream grading failure and malformed output are explicit failures", asyn
 
 test("valid grading preserves a real zero score", async () => {
   let calls = 0;
-  const quality = { score: 0, notes: [], breakdown: { contact_information: 0, experience: 0, skills: 0, education: 0 },
-    improvement_report: { contact_information: "Missing", experience: "Missing", skills: "Missing", education: "Missing", overall: "Incomplete" } };
+  const quality = { score: 0, notes: [], breakdown: { contact_information: 0, experience: 0, skills: 0, education: 0, clarity: 0 },
+    improvement_report: { contact_information: "Missing", experience: "Missing", skills: "Missing", education: "Missing", clarity: "Improve structure", overall: "Incomplete" } };
   globalThis.fetch = async () => response(JSON.stringify(++calls === 1 ? { name: "Candidate" } : quality));
   assert.equal((await parseCv(cv, { apiKey: "test-only" })).quality.score, 0);
 });

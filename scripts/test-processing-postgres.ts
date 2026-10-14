@@ -32,7 +32,7 @@ try{await sql.begin(async tx=>{
   await assert.rejects(registerQueuedCv(env,args));
   await activateQueuedCv(env,candidate);
   const profile={name:'Extracted',skills:[{skill:'JS',years_experience:2},{skill:'JavaScript',years_experience:3},{skill:'Python',years_experience:7}],experience:[],education:[]};
-  const quality={score:50,notes:[],breakdown:{contact_information:50,experience:50,skills:50,education:50},improvement_report:{contact_information:'Fixture',experience:'Fixture',skills:'Fixture',education:'Fixture',overall:'Fixture'}};
+  const quality={score:50,notes:[],breakdown:{contact_information:50,experience:50,skills:50,education:50,clarity:50},improvement_report:{contact_information:'Fixture',experience:'Fixture',skills:'Fixture',education:'Fixture',clarity:'Fixture',overall:'Fixture'}};
   let requests=0;
   globalThis.fetch=async()=>Response.json({content:[{type:'text',text:JSON.stringify(++requests===1?profile:quality)}]});
   assert.equal((await processNextCv(env)).status,'succeeded');
@@ -89,7 +89,7 @@ try{await sql.begin(async tx=>{
     (${versionId},'uktl-cvs',${versionKey},now()-interval '48 hours',now()-interval '48 hours'),
     (${recentId},'uktl-cvs',${`cvs/${recentId}/fixture.txt`},now(),now())`;
   await tx`INSERT INTO cv_versions(id,candidate_id,version,storage_key,filename,content_type,size_bytes,created_at)
-    VALUES(${crypto.randomUUID()},${candidate},1,${versionKey},'fixture.txt','text/plain',1,1)`;
+    VALUES(${crypto.randomUUID()},${candidate},2,${versionKey},'fixture.txt','text/plain',1,1)`;
   const missingId=crypto.randomUUID();
   await tx`INSERT INTO candidates(id,created_at,updated_at,status,source_r2_key)
     VALUES(${missingId},1,1,'failed',${`cvs/${missingId}/missing.txt`})`;

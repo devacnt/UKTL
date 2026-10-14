@@ -1,10 +1,13 @@
 import { eraseCandidateRecord } from "./server/operations";
+import { readAccountRole } from "./server/account-role";
 import { registerQueuedCv,activateQueuedCv,failQueuedUpload,processingStatus,processNextCv,saveProfileRevision } from "./server/processing";
 import { EditableProfileSchema } from "./schemas/editable-profile";
 import { storeRegisteredCv } from "./server/upload-lifecycle";
 import { saveCandidateDecision, undoCandidateDecision, listCandidateDecisions, listJobInterests } from "./server/discovery";
 import { validateCvUpload } from "./server/upload-validation";
 import { createServerFn } from "@tanstack/react-start";
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from "./password-policy";
+import { authCallbackUrl } from "./server/site-url";
 import { getRequestHeader } from "@tanstack/start-server-core";
 import { z } from "zod";
 
@@ -79,9 +82,12 @@ function newId(): string {
 
 const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-function authCallbackUrl(env: { SITE_URL?: string }): string {
-  if (!env.SITE_URL) throw new Error("SITE_URL not configured");
-  return `${env.SITE_URL.replace(/\/+$/, "")}/auth/callback`;
+
+
+/** Visitors see a plain message; operators see the precise cause in server logs. */
+function authUnavailable(cause: string): never {
+  console.error(`[auth] not configured: ${cause}`);
+  throw new Error("Sign-in is temporarily unavailable. Please try again shortly.");
 }
 
 export const getViewerFn = createServerFn({ method: "GET" }).handler(async () => getViewer());
@@ -93,11 +99,15 @@ export const getSessionFn = createServerFn({ method: "GET" }).handler(async () =
   const { getCandidateSession } = await import("./supabase");
   const user = await getCandidateSession();
   const access = user.userId ? await getStaffAccess() : NO_STAFF_ACCESS;
+  const { getAuthenticatedSupabase } = await import("./supabase");
+  const accountRole = user.userId ? await readAccountRole((await getAuthenticatedSupabase()).client, user.userId) : "candidate" as const;
   return {
     userId: user.userId,
     email: user.email,
     isStaff: hasStaffAccess(access),
     isAdmin: hasStaffAccess(access, true),
+    staffRole: access.role,
+    accountRole,
   };
 });
 
@@ -110,7 +120,7 @@ export const signOutFn = createServerFn({ method: "POST" }).handler(async () => 
 export const listCandidatesFn = createServerFn({ method: "GET" }).handler(
   async () => {
     const viewer = await getViewer();
-    const scope = viewer.isStaff ? {} : viewer.userId ? { authUserId: viewer.userId } : null;
+    const scope = viewer.isStaff ? {} : viewer.userId && !viewer.isEmployer ? { authUserId: viewer.userId } : null;
     if (!scope) return [];
     try {
       const env = await getEnv();
@@ -212,6 +222,8 @@ export const uploadAndParseCvFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const viewer = await requireViewer();
     const file = data.get("file");
+    const account = await getSessionFn();
+    if (account.accountRole === "employer" && !viewer.isStaff) throw new Error("CV uploads require a candidate account");
     if (!(file instanceof File)) {
       throw new Error("No file uploaded");
     }
@@ -232,7 +244,8 @@ export const uploadAndParseCvFn = createServerFn({ method: "POST" })
       throw new Error("CV processing is unavailable — runtime bindings are not configured");
     }
     await enforceRateLimit(env, "cvUpload", viewer.userId ?? "admin");
-    if (!env.ANTHROPIC_API_KEY) throw new Error("CV processing is not configured");
+    if (!env.ANTHROPIC_API_KEY) throw new Error("Live CV assessment is not configured yet. You can try the labelled simulation below.");
+    if (env.DATA_BACKEND === "supabase" && (!env.CV_SCAN_URL || !env.CV_SCAN_TOKEN)) throw new Error("Live CV upload is awaiting the private malware scanner. You can try the labelled simulation below.");
     const bytes = await file.arrayBuffer();
     const validated = validateCvUpload(file.name, bytes);
     // Reject malformed/oversized DOCX content before writing a private object.
@@ -310,15 +323,16 @@ export const getDiscoverJobsFn = createServerFn({ method: "GET" })
       if (candidateId && (owner === undefined || !canAccessCandidate(viewer,owner))) throw new Error("Profile unavailable");
       const allJobs = await listJobs(env);
       const matchMap: Record<string, number> = {};
+      const reasons: Record<string,string> = {};
       const swipedIds = new Set(candidateId ? await getSwipedJobIds(env,candidateId) : []);
       if (candidateId) {
-        for (const match of await getMatchesForCandidate(env,candidateId)) matchMap[match.job_id] = match.score;
+        for (const match of await getMatchesForCandidate(env,candidateId)) { matchMap[match.job_id] = match.score; reasons[match.job_id] = match.reasoning; }
       }
       const jobs = allJobs.filter(j=>!swipedIds.has(j.id)).sort((a,b)=>(matchMap[b.id] ?? -1)-(matchMap[a.id] ?? -1) || b.created_at-a.created_at || a.id.localeCompare(b.id));
-      return { jobs, matches:matchMap, candidateId: candidateId ?? undefined,
+      return { jobs, matches:matchMap, reasons, candidateId: candidateId ?? undefined,
         canDecide: !!viewer.userId && owner === viewer.userId, signedIn:!!viewer.userId, unavailable:false };
     } catch {
-      return { jobs:[], matches:{} as Record<string,number>, candidateId:undefined,
+      return { jobs:[], matches:{} as Record<string,number>, reasons:{} as Record<string,string>, candidateId:undefined,
         canDecide:false, signedIn:!!viewer.userId, unavailable:true };
     }
   });
@@ -327,6 +341,7 @@ export const recordSwipeFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => z.object({candidateId:z.string().min(1).max(100),jobId:z.string().min(1).max(100),action:z.enum(["interested","dismissed"])}).parse(raw))
   .handler(async ({ data }) => {
     const viewer = await requireViewer();
+    if (viewer.isEmployer) throw new Error("Candidate account required");
     const env = await getEnv();
     const saved = await saveCandidateDecision(env,viewer.userId!,data.candidateId,data.jobId,data.action);
     return { ok:true as const, ...saved };
@@ -335,6 +350,7 @@ export const undoSwipeFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => z.object({candidateId:z.string().min(1).max(100),jobId:z.string().min(1).max(100),swipedAt:z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)}).parse(raw))
   .handler(async ({ data }) => {
     const viewer = await requireViewer();
+    if (viewer.isEmployer) throw new Error("Candidate account required");
     await undoCandidateDecision(await getEnv(),viewer.userId!,data.candidateId,data.jobId,data.swipedAt);
     return {ok:true};
   });
@@ -342,6 +358,7 @@ export const getSwipeHistoryFn = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) => z.object({cursor:z.object({at:z.number().int().nonnegative(),candidateId:z.string().max(100),jobId:z.string().max(100)}).optional()}).parse(raw))
   .handler(async ({data}) => {
     const viewer = await requireViewer();
+    if (viewer.isEmployer) throw new Error("Candidate account required");
     return listCandidateDecisions(await getEnv(),viewer.userId!,data.cursor);
   });
 
@@ -608,23 +625,23 @@ export const candidateRegisterFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) =>
     z.object({
       email: z.string().email(),
-      password: z.string().min(12).max(128),
+      password: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH),
       name: z.string().min(1),
     }).parse(raw),
   )
   .handler(async ({ data }) => {
     const { setSessionCookies } = await import("./supabase");
     const { createClient } = await import("@supabase/supabase-js");
-    const env = await getEnv();
+    const env = await getEnv().catch((e: unknown) => authUnavailable(e instanceof Error ? e.message : "server environment"));
     await enforceRateLimit(env, "authAccount", getRequestHeader("cf-connecting-ip") ?? "unknown");
-    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) throw new Error("Supabase not configured");
+    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) authUnavailable("SUPABASE_URL / SUPABASE_ANON_KEY missing");
     const client = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
     const { data: authData, error } = await client.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
         data: { name: data.name },
-        emailRedirectTo: env.SITE_URL ? authCallbackUrl(env) : undefined,
+        emailRedirectTo: authCallbackUrl(env),
       },
     });
     if (error) throw new Error(error.message);
@@ -641,14 +658,16 @@ export const candidateLoginFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { setSessionCookies } = await import("./supabase");
     const { createClient } = await import("@supabase/supabase-js");
-    const env = await getEnv();
+    const env = await getEnv().catch((e: unknown) => authUnavailable(e instanceof Error ? e.message : "server environment"));
     await enforceRateLimit(env, "authAccount", getRequestHeader("cf-connecting-ip") ?? "unknown");
-    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) throw new Error("Supabase not configured");
+    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) authUnavailable("SUPABASE_URL / SUPABASE_ANON_KEY missing");
     const client = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
     const { data: authData, error } = await client.auth.signInWithPassword({ email: data.email, password: data.password });
     if (error) throw new Error(error.message);
     await setSessionCookies(authData.session.access_token, authData.session.refresh_token, authData.session.expires_in);
-    return { userId: authData.user.id, email: authData.user.email };
+    const access = await readStaffAccess(client);
+    const accountRole = await readAccountRole(client, authData.user.id);
+    return { userId: authData.user.id, email: authData.user.email, staffRole: access.role, isStaff: hasStaffAccess(access), accountRole };
   });
 
 export const candidateLogoutFn = createServerFn({ method: "POST" }).handler(async () => {
@@ -668,7 +687,7 @@ export const candidateMagicLinkFn = createServerFn({ method: "POST" })
     const { createClient } = await import("@supabase/supabase-js");
     const env = await getEnv();
     await enforceRateLimit(env, "authRecovery", getRequestHeader("cf-connecting-ip") ?? "unknown");
-    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) throw new Error("Supabase not configured");
+    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) authUnavailable("SUPABASE_URL / SUPABASE_ANON_KEY missing");
     const client = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
     const { error } = await client.auth.signInWithOtp({
       email: data.email,
@@ -690,7 +709,7 @@ export const candidateSessionFromTokensFn = createServerFn({ method: "POST" })
     const { setSessionCookies } = await import("./supabase");
     const { createClient } = await import("@supabase/supabase-js");
     const env = await getEnv();
-    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) throw new Error("Supabase not configured");
+    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) authUnavailable("SUPABASE_URL / SUPABASE_ANON_KEY missing");
     const client = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
     const { data: authData, error } = await client.auth.setSession({
       access_token: data.access_token,
@@ -909,7 +928,7 @@ export const candidateResetRequestFn = createServerFn({ method: "POST" })
     return { ok: true };
   });
 export const candidateSetPasswordFn = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => z.object({ password: z.string().min(12).max(128) }).parse(raw))
+  .inputValidator((raw: unknown) => z.object({ password: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH) }).parse(raw))
   .handler(async ({ data }) => {
     const { getAuthenticatedSupabase, clearSessionCookies } = await import("./supabase");
     const { client, user } = await getAuthenticatedSupabase();
@@ -926,6 +945,7 @@ export const getEditableProfileFn=createServerFn({method:"GET"})
   .inputValidator((raw:unknown)=>z.object({id:z.string().min(1).max(100)}).parse(raw))
   .handler(async({data})=>{
     const viewer=await requireViewer(); const env=await getEnv();
+    if (!canAccessCandidate(viewer,viewer.userId)) throw new Error("Candidate account required");
     if(env.DATA_BACKEND!=="supabase") return null;
     const row=await env.DB.prepare("SELECT raw_profile,profile_revision FROM candidates WHERE id=? AND auth_user_id=?")
       .bind(data.id,viewer.userId).first<{raw_profile:string|null;profile_revision:number}>();
@@ -936,6 +956,7 @@ export const saveEditableProfileFn=createServerFn({method:"POST"})
   .inputValidator((raw:unknown)=>z.object({id:z.string().min(1).max(100),revision:z.number().int().nonnegative(),profile:EditableProfileSchema}).parse(raw))
   .handler(async({data})=>{
     const viewer=await requireViewer(); const env=await getEnv();
+    if (!canAccessCandidate(viewer,viewer.userId)) throw new Error("Candidate account required");
     if(env.DATA_BACKEND!=="supabase") throw new Error("Profile editing requires the Supabase backend");
     await enforceRateLimit(env,"cvUpload",viewer.userId!);
     try {

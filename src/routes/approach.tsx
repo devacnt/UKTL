@@ -26,7 +26,7 @@ const principles = [
     idx: "ii.",
     tag: "Honest",
     title: "We tell you where you stand.",
-    body: "Most job searches go quiet and you never find out why. Your CV score breaks down how your CV reads across contact details, experience, skills and education, and each section comes with specific suggestions you can act on straight away.",
+    body: "Most job searches go quiet and you never find out why. Your CV score breaks down how your CV reads across contact details, experience, skills, education, and clarity and structure, and each section comes with specific suggestions you can act on straight away.",
     detail: "Upload an improved version whenever you like; your score and matches update with it.",
   },
   {
@@ -233,7 +233,7 @@ function ApproachPage() {
                   to="/auth/register"
                   className="text-[13px] px-5 py-2.5 border border-ink bg-ink text-paper rounded-full hover:opacity-80 transition-opacity whitespace-nowrap"
                 >
-                  Upload your CV →
+                  Register free →
                 </Link>
               </div>
             </div>

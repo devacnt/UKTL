@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { adminSessionFn, staffMfaEnrollFn, staffMfaStatusFn, staffMfaVerifyFn, adminLogoutFn } from "@/lib/functions";
 export const Route = createFileRoute("/auth/security")({
   beforeLoad: async () => { const access = await adminSessionFn(); if (!access.role) throw redirect({ to: "/admin/login" }); },
@@ -8,6 +8,7 @@ export const Route = createFileRoute("/auth/security")({
 function SecurityPage() {
   const status = Route.useLoaderData();
   const navigate = useNavigate();
+  const router = useRouter();
   const [setup, setSetup] = useState<Awaited<ReturnType<typeof staffMfaEnrollFn>> | null>(null);
   const [factor, setFactor] = useState(status.factors[0]?.id ?? "");
   const [code, setCode] = useState("");
@@ -21,7 +22,7 @@ function SecurityPage() {
   }
   async function verify(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError("");
-    try { const result = await staffMfaVerifyFn({ data: { factorId: factor, code } }); setSetup(null); setCode(""); await navigate({ to: result.role === "admin" ? "/admin" : "/admin/candidates" }); }
+    try { const result = await staffMfaVerifyFn({ data: { factorId: factor, code } }); setSetup(null); setCode(""); await router.invalidate(); await navigate({ to: result.role === "admin" ? "/admin" : "/admin/candidates" }); }
     catch (e) { setError(e instanceof Error ? e.message : "Verification failed"); setCode(""); }
     finally { setBusy(false); }
   }

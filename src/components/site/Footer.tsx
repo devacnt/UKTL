@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouteContext } from "@tanstack/react-router";
 
 export function Footer() {
   const year = new Date().getFullYear();
+  const { session } = useRouteContext({ from: "__root__" });
 
   return (
     <footer className="bg-paper border-t border-rule">
@@ -55,12 +56,27 @@ export function Footer() {
             <FooterLink to="/contact">Contact</FooterLink>
           </FooterCol>
 
-          <FooterCol title="Candidates">
-            <FooterLink to="/auth/register">Create an account</FooterLink>
-            <FooterLink to="/auth/login">Sign in</FooterLink>
-            <FooterLink to="/app/upload">Upload your CV</FooterLink>
-            <FooterLink to="/app/jobs">Open roles</FooterLink>
-          </FooterCol>
+          {session.isStaff ? (
+            <FooterCol title="Staff">
+              <FooterLink to="/admin">Staff dashboard</FooterLink>
+              <FooterLink to="/app/candidates">Candidates</FooterLink>
+              <FooterLink to="/app/jobs">Mandates</FooterLink>
+            </FooterCol>
+          ) : session.userId ? (
+            <FooterCol title="Your account">
+              <FooterLink to="/app">Dashboard</FooterLink>
+              <FooterLink to="/app/upload">My CV</FooterLink>
+              <FooterLink to="/app/discover">Job matches</FooterLink>
+              <FooterLink to="/app/consultations">Consultations</FooterLink>
+            </FooterCol>
+          ) : (
+            <FooterCol title="Candidates">
+              <FooterLink to="/auth/register">Register free</FooterLink>
+              <FooterLink to="/auth/login">Sign in</FooterLink>
+              <FooterLink to="/app/jobs">Open roles</FooterLink>
+              <FooterLink to="/app/hr">Workplace questions</FooterLink>
+            </FooterCol>
+          )}
 
           <FooterCol title="Elsewhere">
             <li>

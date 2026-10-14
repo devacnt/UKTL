@@ -78,6 +78,8 @@ export const ScoreBreakdownSchema = z.object({
   experience: z.number().min(0).max(100),
   skills: z.number().min(0).max(100),
   education: z.number().min(0).max(100),
+  // Optional only when reading assessments created before the five-part rubric.
+  clarity: z.number().min(0).max(100).optional(),
 });
 export type ScoreBreakdown = z.infer<typeof ScoreBreakdownSchema>;
 
@@ -86,6 +88,7 @@ export const ImprovementReportSchema = z.object({
   experience: z.string(),
   skills: z.string(),
   education: z.string(),
+  clarity: z.string().optional(),
   overall: z.string(),
 });
 export type ImprovementReport = z.infer<typeof ImprovementReportSchema>;

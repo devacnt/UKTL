@@ -34,6 +34,8 @@ For initial setup before the automation account is enrolled, an operator can run
 |---|---|---|
 | Candidate registration | Confirmation email received; link works on confirmed origin | BLOCKED |
 | Login / refresh / logout | Own profile persists; logout revokes refresh session | BLOCKED |
+| Continue with Google | New Google user lands on the requested page with a profile name; same-email existing account is linked, not duplicated; cancelling at Google returns to a clear error | BLOCKED |
+| Continue with Apple | First sign-in stores the name; "Hide My Email" works as its own account; renewal date for the Apple secret recorded | BLOCKED |
 | Password reset | Email link opens new-password form; new password works; old one fails | BLOCKED |
 | Reused/expired reset link | Safe error; no password update | BLOCKED |
 | Profile edit | Name/contact/location/sector persist after reload | BLOCKED |

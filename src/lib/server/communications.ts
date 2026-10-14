@@ -4,7 +4,7 @@ import { getConsultation, formatLondonRange } from "./calendar.ts";
 
 export const CAMPAIGN_LIMIT = 500;
 export const eligibleRecipientsSql = `SELECT DISTINCT ON(c.auth_user_id) c.id,c.auth_user_id,u.email,c.name
- FROM candidates c JOIN auth.users u ON u.id=c.auth_user_id
+ FROM candidates c JOIN auth_accounts u ON u.id=c.auth_user_id
  JOIN communication_preferences p ON p.user_id=c.auth_user_id AND p.campaigns_enabled=true
  WHERE u.email_confirmed_at IS NOT NULL AND u.email IS NOT NULL AND c.status='parsed'
  AND (?='' OR c.id IN(SELECT candidate_id FROM matches m JOIN jobs j ON j.id=m.job_id WHERE j.sector=?))
@@ -125,7 +125,7 @@ export async function deliverNextCommunication(env: AppEnv, now = Date.now()) {
       `SELECT m.subject,m.body,m.to_email,p.unsubscribe_token FROM candidate_messages m
    JOIN email_campaigns c ON c.id=m.campaign_id AND c.status='scheduled'
    JOIN communication_preferences p ON p.user_id=m.recipient_user_id AND p.campaigns_enabled=true
-   JOIN auth.users u ON u.id=m.recipient_user_id AND u.email_confirmed_at IS NOT NULL AND lower(u.email)=lower(m.to_email)
+   JOIN auth_accounts u ON u.id=m.recipient_user_id AND u.email_confirmed_at IS NOT NULL AND lower(u.email)=lower(m.to_email)
    WHERE m.id=?::uuid AND m.status IN('pending','failed')`,
     )
       .bind(job.message_id!)

@@ -136,7 +136,7 @@ function Hero() {
               to="/auth/register"
               className="inline-flex items-center gap-2 text-[13px] px-5 py-2.5 border border-ink bg-ink text-paper rounded-full hover:opacity-80 transition-opacity"
             >
-              Upload your CV →
+              Register free →
             </Link>
           </div>
         </div>
@@ -186,7 +186,7 @@ const SERVICES = [
   {
     num: "01",
     title: "A free CV score",
-    body: "Your CV is scored out of 100 across contact details, experience, skills and education — so you can see exactly where it's strong and where it may be costing you interviews.",
+    body: "Your CV is scored out of 100 across contact details, experience, skills, education, and clarity and structure — so you can see exactly where it's strong and where it may be costing you interviews.",
     link: "/auth/register",
   },
   {
@@ -559,7 +559,7 @@ function ContactCTA() {
                   to="/auth/register"
                   className="inline-flex items-center justify-center gap-2 text-[14px] font-medium px-6 py-3.5 bg-paper text-ink rounded-full hover:bg-accent-light transition-colors"
                 >
-                  Upload your CV — it's free →
+                  Register free →
                 </Link>
                 <Link
                   to="/contact"

@@ -1,0 +1,20 @@
+import {test,expect} from "./fixtures";
+test("candidate simulation, immutable history and saved-list navigation",async({page})=>{
+ test.skip(!process.env.E2E_CANDIDATE_EMAIL || !process.env.E2E_CANDIDATE_PASSWORD,"Requires disposable confirmed staging candidate");
+ await page.goto("/auth/login");
+ await page.getByLabel("Email",{exact:true}).fill(process.env.E2E_CANDIDATE_EMAIL!);
+ await page.getByLabel("Password",{exact:true}).fill(process.env.E2E_CANDIDATE_PASSWORD!);
+ await page.getByRole("button",{name:"Sign in",exact:true}).click();
+ await expect(page).toHaveURL(/\/app/);
+ await page.goto("/app/upload");
+ await page.getByText("Try a simulated CV assessment",{exact:true}).click();
+ await page.getByLabel("Select a test PDF or DOCX").setInputFiles({name:"synthetic-test.pdf",mimeType:"application/pdf",buffer:Buffer.from("%PDF-1.4\n% Synthetic simulation fixture only\n%%EOF")});
+ await expect(page.getByRole("region",{name:"Simulated assessment"})).toContainText("Simulation · 72/100");
+ await page.getByLabel("Example headline (editable)").fill("Edited example");
+ await expect(page.getByLabel("Example headline (editable)")).toHaveValue("Edited example");
+ await page.reload();
+ await expect(page.getByRole("region",{name:"Simulated assessment"})).toHaveCount(0);
+ await page.goto("/app/activity");
+ await expect(page.getByLabel("Show saved jobs only")).toBeChecked();
+ await expect(page.locator('footer[aria-label="Account support"]')).toBeVisible();
+});

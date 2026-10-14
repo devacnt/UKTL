@@ -55,7 +55,7 @@ export function Nav({ variant = "overlay" }: { variant?: "overlay" | "solid" }) 
     <nav
       className={`${position} top-0 left-0 right-0 z-[100] flex items-center justify-between transition-all duration-[400ms] [transition-timing-function:var(--ease-publication)] ${
         solid
-          ? "py-3 bg-paper/90 backdrop-blur-xl backdrop-saturate-150 border-b border-rule"
+          ? open ? "py-3 bg-paper border-b border-rule" : "py-3 bg-paper/90 backdrop-blur-xl backdrop-saturate-150 border-b border-rule"
           : "py-5 bg-transparent border-b border-transparent"
       }`}
       style={{ paddingLeft: "clamp(20px, 4.5vw, 64px)", paddingRight: "clamp(20px, 4.5vw, 64px)" }}
@@ -126,7 +126,7 @@ export function Nav({ variant = "overlay" }: { variant?: "overlay" | "solid" }) 
                 to="/auth/register"
                 className="text-[13px] px-4 py-2 bg-ink text-paper rounded-full transition-opacity duration-300 hover:opacity-80"
               >
-                Upload your CV →
+                Register free →
               </Link>
             </li>
           </>
@@ -195,7 +195,7 @@ export function Nav({ variant = "overlay" }: { variant?: "overlay" | "solid" }) 
                     onClick={() => setOpen(false)}
                     className="w-full text-center text-[14px] px-6 py-4 bg-ink text-paper rounded-full"
                   >
-                    Upload your CV →
+                    Register free →
                   </Link>
                   <Link
                     to="/auth/login"

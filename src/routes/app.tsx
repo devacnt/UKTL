@@ -10,6 +10,8 @@ export const Route = createFileRoute("/app")({
     if (!session.userId) {
       throw redirect({ to: "/auth/login", search: { redirect: location.href } });
     }
+    if (session.staffRole && !session.isStaff) throw redirect({ to: "/auth/security" });
+    if (session.accountRole === "employer" && !session.isStaff) throw redirect({ href: "/employer" });
   },
   head: () => ({
     meta: [

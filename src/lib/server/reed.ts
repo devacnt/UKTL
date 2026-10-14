@@ -54,13 +54,18 @@ function reedSourceUrl(value: unknown): string | null {
     return null;
   }
 }
-export function normaliseReedJob(raw: Record<string, unknown>, id: number, sector: ReedSector) {
+export function normaliseReedJob(raw: Record<string, unknown>, id: number, sector: ReedSector, now = new Date()) {
   const title = text(raw.jobTitle);
   if (!title) throw new Error("Invalid Reed vacancy");
   if (!matchesReedSector(title, sector)) return null;
-  const expiry = reedDate(raw.expirationDate);
+  const suppliedExpiry = reedDate(raw.expirationDate);
   // An invalid supplied expiry cannot silently turn into an evergreen vacancy.
-  if (raw.expirationDate && !expiry) throw new Error("Invalid Reed expiry");
+  if (raw.expirationDate && !suppliedExpiry) throw new Error("Invalid Reed expiry");
+  const posted = reedDate(raw.datePosted ?? raw.date);
+  const today = now.toISOString().slice(0, 10);
+  const anchor = posted && posted < today ? posted : today;
+  const cap = new Date(Date.parse(anchor) + 30 * 86400000).toISOString().slice(0, 10);
+  const expiry = suppliedExpiry && suppliedExpiry < cap ? suppliedExpiry : cap;
   const min = money(raw.minimumSalary),
     max = money(raw.maximumSalary);
   if (min !== null && max !== null && min > max) throw new Error("Invalid Reed salary range");
@@ -72,7 +77,7 @@ export function normaliseReedJob(raw: Record<string, unknown>, id: number, secto
     description: text(raw.jobDescription, 100000),
     sourceId: String(id),
     sourceUrl: reedSourceUrl(raw.jobUrl),
-    posted: reedDate(raw.datePosted ?? raw.date),
+    posted,
     expiry,
     salaryMin: min,
     salaryMax: max,
@@ -95,7 +100,8 @@ export async function saveReedJob(
     ON CONFLICT(source,source_id) WHERE source_id IS NOT NULL DO UPDATE SET
       title=excluded.title,company=excluded.company,location=excluded.location,sector=excluded.sector,
       description=excluded.description,source_url=excluded.source_url,
-      posted_date=COALESCE(excluded.posted_date,jobs.posted_date),expiry_date=excluded.expiry_date,
+      posted_date=COALESCE(jobs.posted_date,excluded.posted_date),
+      expiry_date=CASE WHEN jobs.expiry_date IS NOT NULL AND jobs.expiry_date < excluded.expiry_date THEN jobs.expiry_date ELSE excluded.expiry_date END,
       salary_min=excluded.salary_min,salary_max=excluded.salary_max,
       salary_currency=excluded.salary_currency,salary_period=excluded.salary_period`,
   ).bind(

@@ -134,7 +134,7 @@ function SectorsPage() {
                         to="/auth/register"
                         className="inline-flex items-center gap-2 text-[13px] text-ink-soft hover:text-ink transition-colors border-b border-transparent hover:border-ink pb-0.5"
                       >
-                        Upload your CV to be matched →
+                        Register to be matched →
                       </Link>
                     </div>
                   </div>
@@ -198,7 +198,7 @@ function SectorsPage() {
                 to="/auth/register"
                 className="text-[13px] px-5 py-2.5 border border-ink bg-ink text-paper rounded-full hover:opacity-80 transition-opacity whitespace-nowrap shrink-0"
               >
-                Upload your CV →
+                Register free →
               </Link>
             </div>
           </Reveal>

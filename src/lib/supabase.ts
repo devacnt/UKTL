@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getCookie, setCookie, deleteCookie } from "@tanstack/start-server-core";
 import { getEnv } from "./server/env";
+import { sessionCookieAttributes } from "./server/cookie-policy";
 
 // ── Browser client ────────────────────────────────────────────────────────────
 // Uses VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY (public, safe for browser).
@@ -59,25 +60,27 @@ export async function setSessionCookies(
   refreshToken: string,
   expiresIn: number,
 ): Promise<void> {
+  const attrs = sessionCookieAttributes();
   await setCookie(ACCESS_COOKIE, accessToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "lax",
+    ...attrs,
     maxAge: expiresIn,
     path: "/",
   });
   await setCookie(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
     secure: true,
-    sameSite: "lax",
+    ...attrs,
     maxAge: 60 * 60 * 24 * 365,
     path: "/",
   });
 }
 
 export async function clearSessionCookies(): Promise<void> {
-  await deleteCookie(ACCESS_COOKIE, { path: "/" });
-  await deleteCookie(REFRESH_COOKIE, { path: "/" });
+  const attrs = { path: "/", secure: true, ...sessionCookieAttributes() };
+  await deleteCookie(ACCESS_COOKIE, attrs);
+  await deleteCookie(REFRESH_COOKIE, attrs);
 }
 
 

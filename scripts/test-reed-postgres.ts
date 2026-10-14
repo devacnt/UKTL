@@ -57,7 +57,7 @@ try {
     await tx`UPDATE jobs SET status='open' WHERE id=${original.id}`;
     assert.ok(!(await listJobs(env)).some((j) => j.id === original.id));
     await saveReedJob(env, { ...job, expiry: "2099-01-01" });
-    assert.ok((await listJobs(env)).some((j) => j.id === original.id));
+    assert.ok(!(await listJobs(env)).some((j) => j.id === original.id), "Repeat imports cannot resurrect an expired vacancy");
     assert.equal(
       (await tx`SELECT count(*)::int AS n FROM jobs WHERE source='reed' AND source_id='901'`)[0].n,
       1,

@@ -102,7 +102,7 @@ function ReachPage() {
                 to="/auth/register"
                 className="text-[13px] px-5 py-2.5 border border-ink bg-ink text-paper rounded-full hover:opacity-80 transition-opacity whitespace-nowrap shrink-0"
               >
-                Upload your CV →
+                Register free →
               </Link>
             </div>
           </Reveal>

@@ -6,7 +6,7 @@ test.describe("Public site and header", () => {
     await expect(page).not.toHaveTitle(/not found/i);
     const nav = page.getByRole("navigation").first();
     await expect(nav.getByRole("link", { name: "Sign in" })).toBeVisible();
-    await expect(nav.getByRole("link", { name: /upload your cv/i })).toBeVisible();
+    await expect(nav.getByRole("link", { name: /register free/i })).toBeVisible();
   });
 
   for (const path of ["/approach", "/services", "/sectors", "/reach", "/contact"]) {

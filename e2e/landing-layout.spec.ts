@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures";
 
-for (const width of [320, 390, 768, 1440]) {
+for (const width of [320, 375, 390, 768, 1440]) {
   test(`landing headings remain readable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: "reduce" });

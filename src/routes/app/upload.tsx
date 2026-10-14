@@ -1,11 +1,14 @@
 import { useState, useCallback, useRef } from "react";
-import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { CvSimulation } from "@/components/app/CvSimulation";
+import { cvHistoryFn } from "@/lib/account-functions";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/AppLayout";
 import { uploadAndParseCvFn } from "@/lib/functions";
 
 // Sign-in is enforced by the /app layout guard and again by uploadAndParseCvFn.
 export const Route = createFileRoute("/app/upload")({
+  loader: async () => { try { return {history:await cvHistoryFn(),unavailable:false}; } catch { return {history:[],unavailable:true}; } },
   component: UploadPage,
 });
 
@@ -22,6 +25,7 @@ const STAGE_LABELS: Record<Stage, string> = {
 };
 
 function UploadPage() {
+  const {history,unavailable} = Route.useLoaderData();
   const navigate = useNavigate();
   const { session } = useRouteContext({ from: "__root__" });
   const isStaff = session.isStaff;
@@ -111,6 +115,9 @@ function UploadPage() {
         }
       />
 
+      <CvSimulation />
+      {unavailable && <p role="alert" className="my-4 text-sm">CV history is temporarily unavailable. Previous versions have not been removed.</p>}
+      {!!history.length && <section className="max-w-[720px] my-6"><h2 className="font-display text-2xl">CV version history</h2><p className="text-sm text-ink-soft my-2">Previous uploads are retained. Open a version to review its assessment and download the original when scanning is available.</p><ul className="space-y-3">{history.map(item=><li key={item.id} className="text-sm break-words"><Link to="/app/candidates/$id" params={{id:item.id}} className="underline">{item.source_filename ?? "CV"}</Link> · {new Date(item.created_at).toISOString().slice(0,10)} · {item.status}</li>)}</ul></section>}
       <form onSubmit={onSubmit} className="max-w-[720px]">
         {/* Drop zone */}
         <div
@@ -185,7 +192,7 @@ function UploadPage() {
         )}
 
         {/* Footer row */}
-        <div className="mt-6 flex items-center justify-between gap-4">
+        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <p className="text-xs text-ink-mute max-w-[44ch]">
             Files are kept in private storage. Claude processes your document to extract its contents and prepare your assessment.
           </p>

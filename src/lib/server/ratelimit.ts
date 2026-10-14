@@ -95,7 +95,14 @@ export async function enforceRateLimit(
   scope: keyof typeof RATE_LIMITS,
   identity: string,
 ): Promise<void> {
-  const result = await consumeRateLimit(env, scope, identity);
+  let result: RateLimitResult;
+  try {
+    result = await consumeRateLimit(env, scope, identity);
+  } catch (e) {
+    // Fail closed, but never show database/configuration details to a visitor.
+    console.error("[ratelimit] unavailable", { scope, cause: e instanceof Error ? e.message : "unknown" });
+    throw new Error("This is temporarily unavailable. Please try again shortly.");
+  }
   if (!result.allowed) throw new RateLimitError(result.retryAfterSeconds);
 }
 
