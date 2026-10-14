@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { candidateSessionFromTokensFn } from "@/lib/functions";
+import { oauthFinishFn } from "@/lib/oauth-functions";
 
 export const Route = createFileRoute("/auth/callback")({
   component: CallbackPage,
 });
 
 // Supabase email links (magic link, sign-up confirmation) land here with the
-// session in the URL fragment; it is exchanged for httpOnly cookies server-side.
+// session in the URL fragment; Google/Apple sign-in lands here with a one-time
+// PKCE code in the query. Both are exchanged for httpOnly cookies server-side.
 function CallbackPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +25,16 @@ function CallbackPage() {
     const described = hash.get("error_description") ?? query.get("error_description");
     if (described) {
       setError(described);
+      return;
+    }
+    const code = query.get("code");
+    if (code) {
+      const flowId = query.get("sb_flow_id") ?? undefined;
+      oauthFinishFn({ data: { code, flowId: flowId && /^[a-f0-9]{32}$/.test(flowId) ? flowId : undefined } })
+        .then((result) => router.navigate({ href: result?.redirect ?? "/app" }).then(() => router.invalidate()))
+        .catch((err: unknown) =>
+          setError(err instanceof Error ? err.message : "Sign-in could not be completed. Please try again."),
+        );
       return;
     }
     const access_token = hash.get("access_token");

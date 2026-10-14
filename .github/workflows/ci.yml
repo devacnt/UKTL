@@ -33,7 +33,7 @@ jobs:
         run: npm run build
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit msedge
 
       - name: End-to-end tests
         run: npx playwright test
@@ -41,11 +41,26 @@ jobs:
           CI: "true"
 
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: playwright-report
-          path: playwright-report
+          path: |
+            playwright-report
+            test-results
           retention-days: 7
+
+      - name: Mobile Lighthouse evidence (local build, not deployed acceptance)
+        run: |
+          npx vite dev --port 5173 --host 127.0.0.1 > /tmp/uktl-vite.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break; sleep 1; done
+          export CHROME_PATH="$(node --input-type=module -e "import {chromium} from 'playwright'; process.stdout.write(chromium.executablePath())")"
+          npx --yes lighthouse@13.5.0 http://127.0.0.1:5173/ --chrome-flags="--headless --no-sandbox" --output=json --output=html --output-path=./lighthouse-mobile --quiet
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-mobile
+          path: lighthouse-mobile.*
+          retention-days: 14
 
 
   postgres-policies:
@@ -56,12 +71,27 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.117.0
+      - name: Enable Google/Apple sign-in on the isolated Auth server (dummy client ids)
+        run: |
+          python3 - <<'PY'
+          import re
+          p = "supabase/config.toml"
+          s = open(p).read()
+          s = re.sub(r"(\[auth\.external\.(google|apple)\]\n)enabled = false", r"\1enabled = true", s)
+          open(p, "w").write(s)
+          PY
       - name: Start isolated local Supabase (database, storage, auth) and replay migrations
         run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,realtime,postgres-meta
         env:
+          SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: local-test.apps.googleusercontent.com
+          SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: local-test-secret
+          SUPABASE_AUTH_EXTERNAL_APPLE_CLIENT_ID: uk.local.test
+          SUPABASE_AUTH_EXTERNAL_APPLE_SECRET: local-test-secret
           SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
       - name: Staff authorization and ownership regression
         run: psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/staff_access.sql
+      - name: Phase 1 employer isolation and CV version history
+        run: psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/phase_one.sql
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -85,6 +115,14 @@ jobs:
         run: |
           eval "$(supabase status -o env)"
           TEST_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" node scripts/test-media-postgres.ts
+      - name: Google/Apple PKCE sign-in against the real Auth server
+        run: |
+          eval "$(supabase status -o env)"
+          TEST_SUPABASE_ANON_KEY="$ANON_KEY" TEST_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" node scripts/test-oauth-supabase.ts
+      - name: HTTPS data bridge (the path Lovable/Cloudflare Workers uses)
+        run: |
+          eval "$(supabase status -o env)"
+          TEST_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" TEST_SUPABASE_ANON_KEY="$ANON_KEY" node scripts/test-https-bridge.ts
       - name: Mandate duration, ranking, fill and reopen
         run: node scripts/test-jobs-postgres.ts
       - name: Inbox, campaign consent, reminders and calendar synchronization

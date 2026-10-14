@@ -49,7 +49,7 @@ function HrIndexPage() {
             </em>
           </>
         }
-        lede="Find reviewed workplace videos and source excerpts. Sign in to save a private question and follow its resolution."
+        lede="Ask a workplace question in your own words. We match it to reviewed guidance, save it privately to your account, and help you follow it through — including booking a consultant if you need one."
         actions={
           <Link
             to="/app/hr/library"

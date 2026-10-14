@@ -126,7 +126,7 @@ export function Nav({ variant = "overlay" }: { variant?: "overlay" | "solid" }) 
                 to="/auth/register"
                 className="text-[13px] px-4 py-2 bg-ink text-paper rounded-full transition-opacity duration-300 hover:opacity-80"
               >
-                Upload your CV →
+                Register free →
               </Link>
             </li>
           </>
@@ -195,7 +195,7 @@ export function Nav({ variant = "overlay" }: { variant?: "overlay" | "solid" }) 
                     onClick={() => setOpen(false)}
                     className="w-full text-center text-[14px] px-6 py-4 bg-ink text-paper rounded-full"
                   >
-                    Upload your CV →
+                    Register free →
                   </Link>
                   <Link
                     to="/auth/login"

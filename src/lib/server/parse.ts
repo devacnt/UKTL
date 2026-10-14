@@ -59,7 +59,8 @@ Given the parsed CV JSON below, return a JSON object with this exact shape and n
     "contact_information": <0-100, based on completeness: name, email, phone, location, LinkedIn>,
     "experience": <0-100, based on detail, quantification, recency, relevance>,
     "skills": <0-100, based on depth, specificity, industry relevance>,
-    "education": <0-100, based on completeness and level>
+    "education": <0-100, based on completeness and relevance, not institutional prestige>,
+    "clarity": <0-100, based on concise language, coherent chronology and readable structure>
   },
   "notes": [<up to 5 short actionable bullet points>],
   "improvement_report": {
@@ -67,6 +68,7 @@ Given the parsed CV JSON below, return a JSON object with this exact shape and n
     "experience": "<1-2 sentences of specific advice>",
     "skills": "<1-2 sentences of specific advice>",
     "education": "<1-2 sentences of specific advice>",
+    "clarity": "<1-2 sentences of specific advice on clarity and structure>",
     "overall": "<2-3 sentence overall assessment and top priority action>"
   }
 }
@@ -178,6 +180,9 @@ export async function gradeProfile(profile: ParsedProfile, opts: {apiKey?:string
   try {
     quality = QualityAssessmentSchema.required({ breakdown: true, improvement_report: true })
       .parse(extractJsonObject(qText));
+    if (quality.breakdown?.clarity == null || !quality.improvement_report?.clarity) {
+      throw new Error("Incomplete five-part assessment");
+    }
   } catch {
     throw new Error("CV grading returned an invalid assessment. Please retry.");
   }

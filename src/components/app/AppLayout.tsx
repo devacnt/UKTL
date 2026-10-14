@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useRouteContext, useRouterState } from "@tanstack/react-router";
 import { Nav } from "@/components/site/Nav";
-import { Footer } from "@/components/site/Footer";
 
 type Section = { to: string; label: string; exact?: boolean };
 
@@ -25,17 +24,25 @@ const STAFF_SECTIONS: Section[] = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const {session}=useRouteContext({from:"__root__"});
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col">
       <Nav variant="solid" />
       <AccountNav />
       <main
-        className="flex-1 w-full max-w-[1440px] mx-auto py-8 md:py-10"
+        className="flex-1 w-full min-w-0 max-w-[1440px] mx-auto py-8 md:py-10"
         style={{ paddingLeft: "clamp(20px, 4.5vw, 64px)", paddingRight: "clamp(20px, 4.5vw, 64px)" }}
       >
         {children}
       </main>
-      <Footer />
+      <footer className="border-t border-rule px-5 py-5 text-xs text-ink-soft flex flex-wrap justify-center gap-6" aria-label="Account support">
+        <Link to="/privacy" className="py-2 underline">Privacy</Link>
+        <Link to="/terms" className="py-2 underline">Terms</Link>
+        <Link to="/contact" className="py-2 underline">Support</Link>
+      </footer>
+      {!session.isStaff && session.accountRole!=="employer" && <nav aria-label="Mobile account" className="md:hidden sticky bottom-0 z-40 grid grid-cols-5 border-t border-rule bg-paper" style={{paddingBottom:"env(safe-area-inset-bottom)"}}>
+        {[{to:"/app",label:"Home"},{to:"/app/upload",label:"CV"},{to:"/app/discover",label:"Jobs"},{to:"/app/activity",label:"Saved"},{to:"/app/profile",label:"Profile"}].map(item=><Link key={item.to} to={item.to} className="min-h-12 flex items-center justify-center text-xs text-ink-soft focus-visible:outline-2 focus-visible:outline-accent" activeProps={{className:"bg-paper-deep text-ink font-medium"}} activeOptions={{exact:item.to==="/app"}}>{item.label}</Link>)}
+      </nav>}
     </div>
   );
 }
@@ -44,7 +51,7 @@ function AccountNav() {
   const { session } = useRouteContext({ from: "__root__" });
   const current = useRouterState().location.pathname;
   const staffOnly = session.isStaff;
-  const sections = staffOnly ? STAFF_SECTIONS : CANDIDATE_SECTIONS;
+  const sections = staffOnly ? STAFF_SECTIONS : session.accountRole === "employer" ? [{to:"/employer",label:"Employer account",exact:true}] : CANDIDATE_SECTIONS;
 
   return (
     <div className="border-b border-rule bg-paper">

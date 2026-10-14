@@ -292,19 +292,20 @@ function CandidateDetailPage() {
                         ["experience", "Experience"],
                         ["skills", "Skills"],
                         ["education", "Education"],
+                        ["clarity", "Clarity and structure"],
                       ] as const
                     ).map(([key, label]) => (
                       <div key={key}>
                         <div className="flex justify-between mb-1">
                           <span className="text-[11px] text-ink-mute">{label}</span>
                           <span className="font-mono text-[11px] tabular-nums text-ink-soft">
-                            {(c.score_breakdown as Record<string, number>)[key]}
+                            {(c.score_breakdown as Record<string, number>)[key] ?? "Not assessed"}
                           </span>
                         </div>
                         <div className="h-1 rounded-full bg-paper-deep overflow-hidden">
                           <div
                             className="h-full rounded-full bg-accent"
-                            style={{ width: `${(c.score_breakdown as Record<string, number>)[key]}%`, opacity: 0.7 }}
+                            style={{ width: `${(c.score_breakdown as Record<string, number>)[key] ?? 0}%`, opacity: 0.7 }}
                           />
                         </div>
                       </div>
@@ -343,6 +344,7 @@ function CandidateDetailPage() {
                     ["experience", "Experience"],
                     ["skills", "Skills"],
                     ["education", "Education"],
+                    ["clarity", "Clarity and structure"],
                   ] as const
                 ).map(([key, label]) => {
                   const text = (c.improvement_report as Record<string, string>)[key];

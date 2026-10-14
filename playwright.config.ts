@@ -18,7 +18,6 @@ export default defineConfig({
     baseURL,
     trace: process.env.E2E_ADMIN_TOTP_SECRET ? "off" : "on-first-retry",
     screenshot: "only-on-failure",
-    ...(executablePath ? { launchOptions: { executablePath } } : {}),
   },
 
   webServer: process.env.E2E_BASE_URL
@@ -33,7 +32,11 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], ...(executablePath ? {launchOptions:{executablePath}} : {}) },
     },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+    { name: "edge", use: { ...devices["Desktop Edge"], channel: "msedge" } },
+    { name: "mobile-375", testMatch: /(?:mobile|phase-one-authenticated)\.spec\.ts/, use: { ...devices["iPhone SE"], viewport: {width:375,height:667} } },
   ],
 });

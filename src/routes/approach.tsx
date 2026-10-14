@@ -233,7 +233,7 @@ function ApproachPage() {
                   to="/auth/register"
                   className="text-[13px] px-5 py-2.5 border border-ink bg-ink text-paper rounded-full hover:opacity-80 transition-opacity whitespace-nowrap"
                 >
-                  Upload your CV →
+                  Register free →
                 </Link>
               </div>
             </div>

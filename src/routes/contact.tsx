@@ -88,7 +88,7 @@ function ContactPage() {
                   to="/auth/register"
                   className="mt-8 inline-flex items-center gap-2 text-[13px] px-5 py-2.5 bg-ink text-paper rounded-full hover:opacity-80 transition-opacity"
                 >
-                  Upload your CV — it's free →
+                  Register free →
                 </Link>
               </div>
             </Reveal>

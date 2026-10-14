@@ -149,7 +149,7 @@ const FOOTER =
 export async function outreachRecipient(env: AppEnv, candidateId: string) {
   const row = await env.DB.prepare(
     `SELECT c.name,c.email,u.email AS account_email FROM candidates c
-       LEFT JOIN auth.users u ON u.id=c.auth_user_id AND u.email_confirmed_at IS NOT NULL
+       LEFT JOIN auth_accounts u ON u.id=c.auth_user_id AND u.email_confirmed_at IS NOT NULL
       WHERE c.id=?`,
   )
     .bind(candidateId)

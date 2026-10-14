@@ -188,7 +188,7 @@ test("self-service export binds verified owner on every query and refuses silent
 test('account erasure requires explicit review and leaves provider failures pending',async()=>{
  const {completeAccountErasure}=await import('../src/lib/server/account-erasure.ts');
  let calls=0,finished=false,userExists=true;
- const env={DATA_BACKEND:'supabase',DB:{prepare(sql:string){return {bind(){return this;},async run(){return {success:true};},async first(){return sql.includes('auth.users')?(userExists?{id:'subject'}:null):{target_user_id:'subject',file_deletion_ids:[],status:'pending'};}};},async batch(){finished=true;return [];}}} as any;
+ const env={DATA_BACKEND:'supabase',DB:{prepare(sql:string){return {bind(){return this;},async run(){return {success:true};},async first(){return sql.includes('auth_accounts')?(userExists?{id:'subject'}:null):{target_user_id:'subject',file_deletion_ids:[],status:'pending'};}};},async batch(){finished=true;return [];}}} as any;
  const auth={async deleteUser(){calls++;return {error:{status:503}};}};
  await assert.rejects(completeAccountErasure(env,'request','admin',false,auth));assert.equal(calls,0);
  assert.equal((await completeAccountErasure(env,'request','admin',true,auth)).status,'pending');assert.equal(finished,false);

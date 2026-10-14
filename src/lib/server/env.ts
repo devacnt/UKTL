@@ -2,8 +2,10 @@
 // `cloudflare:workers` is only resolvable inside the Workers runtime, so we
 // dynamic-import it. Other server runtimes use explicitly configured Supabase credentials.
 
-import { createPostgresDatabase } from "./postgres";
+import { createDatabase } from "./database";
 import { createPrivateCvStorage } from "./storage";
+import { assertSameSupabaseProject } from "./supabase-project";
+import { resolveServerEnv } from "./env-resolve";
 
 export type AppEnv = {
   GOOGLE_CALENDAR_CLIENT_ID?: string;
@@ -12,6 +14,8 @@ export type AppEnv = {
   MICROSOFT_CALENDAR_CLIENT_SECRET?: string;
   CALENDAR_ENCRYPTION_KEY?: string;
   DATA_BACKEND?: "d1" | "supabase";
+  /** "https" (default when the service key is set) or "postgres"; see server/database.ts. */
+  DB_TRANSPORT?: "https" | "postgres";
   DATABASE_URL?: string;
   CRON_SECRET?: string;
   CV_SCAN_URL?: string;
@@ -46,18 +50,16 @@ export async function getEnv(): Promise<AppEnv> {
   try {
     const mod = (await import("cloudflare:workers")) as unknown as { env: AppEnv };
     if (mod.env.DATA_BACKEND === "supabase" || mod.env.DB) {
+      if (mod.env.DATA_BACKEND === "supabase") assertSameSupabaseProject(mod.env);
       cached = configureBackend(mod.env);
       return cached;
     }
   } catch { /* Lovable's server runtime uses server-only environment variables. */ }
-  const values = typeof process !== "undefined" ? process.env : {};
-  if (values.DATA_BACKEND !== "supabase")
-    throw new Error("Server backend is not configured. Set DATA_BACKEND=supabase and the server credentials.");
-  const keys = ["DATA_BACKEND", "DATABASE_URL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY",
-    "SITE_URL", "CRON_SECRET", "CV_SCAN_URL", "CV_SCAN_TOKEN", "ANTHROPIC_API_KEY", "PARSE_PROVIDER", "PARSE_MODEL",
-    "AI_HOURLY_CALL_LIMIT", "REED_API_KEY", "RESEND_API_KEY", "GOOGLE_CALENDAR_CLIENT_ID", "GOOGLE_CALENDAR_CLIENT_SECRET",
-    "MICROSOFT_CALENDAR_CLIENT_ID", "MICROSOFT_CALENDAR_CLIENT_SECRET", "CALENDAR_ENCRYPTION_KEY"];
-  cached = configureBackend(Object.fromEntries(keys.map(key => [key, values[key]])) as unknown as AppEnv);
+  const values: Record<string, string | undefined> = typeof process !== "undefined" ? process.env : {};
+  const resolved = resolveServerEnv(values) as unknown as AppEnv;
+  if (resolved.DATA_BACKEND !== "supabase") throw new Error("Only the Supabase backend is available outside Cloudflare Workers");
+  assertSameSupabaseProject(resolved);
+  cached = configureBackend(resolved);
   return cached;
 }
 
@@ -70,8 +72,7 @@ export function configureBackend(env: AppEnv): AppEnv {
     // Resolve credentials on use: missing data credentials must not prevent
     // Supabase sign-in or turn into a silent fallback to the legacy database.
     get DB() {
-      if (!env.DATABASE_URL) throw new Error("DATABASE_URL is not configured");
-      return (database ??= createPostgresDatabase(env.DATABASE_URL));
+      return (database ??= createDatabase(env));
     },
     get CV_BUCKET() {
       if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {

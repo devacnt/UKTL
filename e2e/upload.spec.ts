@@ -11,7 +11,7 @@ test.describe("CV upload", () => {
 
   test("the landing page sends new candidates to create an account", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("navigation").first().getByRole("link", { name: /upload your cv/i }).click();
+    await page.getByRole("navigation").first().getByRole("link", { name: /register free/i }).click();
     await expect(page).toHaveURL(/\/auth\/register/);
   });
 });

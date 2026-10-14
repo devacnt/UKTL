@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound, useRouter, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
+import { ReedApply } from "@/components/app/ReedApply";
 import { toast } from "sonner";
 import { EmptyState, PageHeader, Pill, ScoreBar, Section } from "@/components/app/AppLayout";
 import { getJobDetailFn, setMatchStageFn } from "@/lib/functions";
@@ -80,6 +81,7 @@ function JobDetailPage() {
         }
       />
 
+      <ReedApply job={job} />
       <div className="grid md:grid-cols-[2fr_1fr] gap-10">
         <div>
           {job.description && (

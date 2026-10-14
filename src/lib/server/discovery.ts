@@ -4,6 +4,7 @@ export type SwipeCursor = { at: number; candidateId: string; jobId: string };
 export type SwipeHistoryEntry = {
   candidate_id: string; job_id: string; action: SwipeAction; swiped_at: number;
   title: string; company: string | null; location: string | null; status: string;
+  source: string | null; source_url: string | null; expiry_date: string | null;
 };
 /** Ownership and job status are checked in the same statement as the write. */
 export async function saveCandidateDecision(env: AppEnv, userId: string, candidateId: string, jobId: string, action: SwipeAction) {
@@ -30,7 +31,7 @@ export async function listCandidateDecisions(env: AppEnv, userId: string, cursor
     after = " AND (s.swiped_at < ? OR (s.swiped_at = ? AND (s.candidate_id > ? OR (s.candidate_id = ? AND s.job_id > ?))))";
     args.push(cursor.at,cursor.at,cursor.candidateId,cursor.candidateId,cursor.jobId);
   }
-  const result = await env.DB.prepare(`SELECT s.*,j.title,j.company,j.location,j.status
+  const result = await env.DB.prepare(`SELECT s.*,j.title,j.company,j.location,j.status,j.source,j.source_url,j.expiry_date
     FROM candidate_swipes s JOIN candidates c ON c.id=s.candidate_id JOIN jobs j ON j.id=s.job_id
     WHERE c.auth_user_id=?${after} ORDER BY s.swiped_at DESC,s.candidate_id ASC,s.job_id ASC LIMIT 51`).bind(...args).all<SwipeHistoryEntry>();
   const rows = (result.results ?? []).map(r=>({...r,swiped_at:Number(r.swiped_at)}));

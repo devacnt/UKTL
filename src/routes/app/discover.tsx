@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { getDiscoverJobsFn, recordSwipeFn, undoSwipeFn } from "@/lib/functions";
 import { filterJobs } from "@/lib/job-search";
+import { ReedApply } from "@/components/app/ReedApply";
 import type { Job } from "@/lib/schemas/job";
 
 export const Route = createFileRoute("/app/discover")({
@@ -22,7 +23,7 @@ type SwipeAction = "interested" | "dismissed";
 type FlyDir = "right" | "left" | null;
 
 function DiscoverPage() {
-  const { jobs: loadedJobs, matches, candidateId, canDecide, signedIn, unavailable } = Route.useLoaderData();
+  const { jobs: loadedJobs, matches, reasons, candidateId, canDecide, signedIn, unavailable } = Route.useLoaderData();
 
   const search = Route.useSearch();
   const initialJobs = useMemo(() => filterJobs(loadedJobs, search.q ?? "", search.location ?? ""), [loadedJobs, search.q, search.location]);
@@ -211,6 +212,8 @@ function DiscoverPage() {
       </div>
 
       {feedback}
+      {current && reasons[current.id] && <p className="w-full max-w-[520px] text-sm text-ink-soft my-3">{reasons[current.id]}</p>}
+      {current && <div className="w-full max-w-[520px]"><ReedApply job={current} /></div>}
       {/* Card stack */}
       <div className="relative w-full max-w-[520px]" style={{ height: 520 }}>
         {/* Ghost cards behind */}

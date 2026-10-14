@@ -1,6 +1,6 @@
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "talent-compass"
+project_id = "jwfycrmrgwslxyxvirfn"
 
 [api]
 enabled = true
@@ -63,6 +63,21 @@ enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
 enable_signup = true
+
+# Candidate sign-in with Google and Apple (PKCE; see src/lib/server/oauth.ts).
+# Local testing: set enabled = true and export the env vars before `supabase start`.
+# Hosted projects: Dashboard → Authentication → Sign In / Providers. The app shows a
+# button only for providers the project reports as enabled.
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = false
+
+[auth.external.apple]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_APPLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
